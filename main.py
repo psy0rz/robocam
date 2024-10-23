@@ -11,7 +11,7 @@ import cv2
 #    print("Error: Could not open webcam.")
 #    exit()
 
-model = YOLO("/home/psy/robotcam/runs/obb/train23/weights/best.pt")
+model = YOLO("/app/runs/obb/train23/weights/best.pt")
 
 import cv2
 
@@ -19,10 +19,11 @@ from ultralytics import YOLO
 
 
 # Open the video file
-cap = cv2.VideoCapture(0)
+#usb
+cap = cv2.VideoCapture(4)
 
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1088)
+# cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1088)
 
 # Loop through the video frames
 while cap.isOpened():
@@ -31,7 +32,8 @@ while cap.isOpened():
 
     if success:
         # Run YOLO inference on the frame
-        results = model.predict(frame, imgsz=(1920,1088), conf=0.8)
+        # results = model.predict(frame, imgsz=(1920,1088), conf=0.8)
+        results = model.predict(frame, conf=0.8)
 
         # Visualize the results on the frame
         annotated_frame = results[0].plot(line_width=2)
