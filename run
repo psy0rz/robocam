@@ -1,11 +1,13 @@
 #!/bin/bash
 xhost +
+docker build . --tag robocam || exit 1
+
 docker run -e DISPLAY=$DISPLAY \
-    -v $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/tmp/$WAYLAND_DISPLAY \
-    -v $(pwd):/app \
-    --privileged \
-    --rm \
-    --net=host -it --ipc=host \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v ~/.Xauthority:/root/.Xauthority \
-    -it ultralytics/ultralytics
+  -v $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/tmp/$WAYLAND_DISPLAY \
+  -v $(pwd):/app \
+  --privileged \
+  --rm \
+  --net=host -it --ipc=host \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v ~/.Xauthority:/root/.Xauthority \
+  -it robocam python main.py
