@@ -29,6 +29,7 @@ client.connect('localhost')
 
 # Publish a message to the topic
 def publish(middles):
+    print(middles)
     client.publish("middles", middles)
 
 
