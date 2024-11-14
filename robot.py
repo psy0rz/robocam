@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from PyQt5.QtCore import center
 
 import detector
 
@@ -32,6 +33,15 @@ def draw_target_cross(img, center, color, thickness, line_length):
     # Draw vertical line
     cv2.line(img, (center[0], center[1] - line_length), (center[0], center[1] + line_length), color, thickness)
 
+def distance_between_points(point1, point2):
+    # Convert points to NumPy arrays (OpenCV works well with NumPy)
+    point1 = np.array(point1, dtype=np.float32)
+    point2 = np.array(point2, dtype=np.float32)
+
+    # Calculate the Euclidean distance using OpenCV
+    distance = cv2.norm(point1, point2, cv2.NORM_L2)
+    return distance
+
 
 # Callback function for mouse click event
 
@@ -45,11 +55,8 @@ def click_event(event, x, y, flags, param):
 async def task():
 
     tracking_id=0
+    tracking_center=(-1,-1)
 
-    #find closed to lastclicked
-    closest_id=0
-    closest_x=0
-    closest_y=0
 
     while True:
         await  detector.result_ready.wait()
@@ -62,6 +69,11 @@ async def task():
         cv2.circle(output_frame, (cam_center_x, cam_center_y), 5, (255, 255, 255), 1, cv2.LINE_AA)
 
         # print(detector.result.boxes.id)
+
+        # find closed to lastclicked
+        closest_id = -1
+        closest_point = (-10000, -10000)
+
         middles = []
         id_nr=0
         for xyxy in detector.result.boxes.xyxy:
@@ -82,7 +94,10 @@ async def task():
             center_y = int((y1 + y2) / 2)
             middles.append([center_x, center_y])
 
-
+            if last_clicked[0] is not None:
+                if distance_between_points( last_clicked, (center_x,center_y)) < distance_between_points(last_clicked, closest_point):
+                    closest_point=(center_x,center_y)
+                    closest_id=detector.result.boxes.id[id_nr]
 
 
             # determine color sampling region
@@ -110,7 +125,19 @@ async def task():
             #             (x1, y1-2), cv2.FONT_HERSHEY_SIMPLEX,
             #             0.3, color=[255, 255, 255], thickness=1, lineType=cv2.LINE_AA)
 
+            #this is the one we track?
+            if detector.result.boxes.id is not None and tracking_id==detector.result.boxes.id[id_nr]:
+                tracking_center=(center_x, center_y)
+
+
             id_nr=id_nr+1
 
+        draw_target_cross(output_frame, tracking_center, (0,0,255), 1,1000)
+
+
+        if closest_id!=-1:
+            tracking_id=closest_id
+
+        last_clicked[0]=None
         cv2.imshow('Robot', output_frame)
         cv2.setMouseCallback('Robot', click_event)
