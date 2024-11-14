@@ -36,7 +36,7 @@ async def task():
             if success:
                 # Run YOLO inference on the frame
                 # results = model.predict(frame, imgsz=(1920,1088), conf=0.8)
-                results = model.track(frame, conf=0.75, persist=True, verbose=False)
+                results = model.track(frame, conf=0.5, persist=True, verbose=False)
 
                 # Visualize the results on the frame
                 annotated_frame = results[0].plot(line_width=1)

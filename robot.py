@@ -62,6 +62,8 @@ async def task():
         await  detector.result_ready.wait()
 
         output_frame = detector.result_frame.copy()
+        if detector.result_frame is None:
+            continue
 
         # camera center
         cam_center_x = int(detector.result.orig_shape[1] / 2)
