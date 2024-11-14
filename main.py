@@ -8,8 +8,10 @@ from PIL import Image
 import cv2
 import json
 
-model = YOLO("/app/runs/obb/train23/weights/best.pt")
-
+#trained on yolo11l-obb.pt LARGE
+#model = YOLO("/app/runs/obb/train23/weights/best.pt")
+#trained on yolo11n-obb.pt small
+model = YOLO("/app/runs/obb/train24/weights/best.pt")
 import cv2
 from ultralytics import YOLO
 
