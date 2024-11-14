@@ -4,6 +4,7 @@ from ultralytics import YOLO
 import cv2
 
 
+
 async def task():
     print("Loading model...")
     # trained on yolo11l-obb.pt LARGE
@@ -62,6 +63,7 @@ async def task():
             await asyncio.sleep(0)
     except asyncio.CancelledError:
        cap.release()
+
 
 
 # task=asyncio.create_task(loop())

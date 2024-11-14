@@ -12,7 +12,11 @@ from watchfiles import awatch
 
 
 def task_done(task):
-    task.result()  # Raises the exception if one occurred
+    try:
+        task.result()  # Raises the exception if one occurred
+    except KeyboardInterrupt:
+        print("Keyboard interrupt received, exiting...")
+        os._exit(1)
 
 #start module task, watch for changes, and restart task if needed
 async def auto_reload(module):
@@ -34,8 +38,8 @@ async def auto_reload(module):
                 try:
                     importlib.reload(module)
                 except Exception as e:
-                    print("autoreload failed: (restarting old task)")
                     traceback.print_exc()
+                    print("autoreload: Module reload FAILED! (restarting old task)")
 
                 #recreate task
                 task=asyncio.create_task(module.task())
