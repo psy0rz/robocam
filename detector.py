@@ -48,7 +48,7 @@ async def task():
 
 
                 # Display the annotated frame
-                cv2.putText(annotated_frame,f"{int(results[0].speed['inference'])} mS", (10,30),cv2.FONT_HERSHEY_SIMPLEX, 0.8, color=[255,255,255], thickness=2)
+                cv2.putText(annotated_frame,f"{int(results[0].speed['inference'])} mS", (10,30),cv2.FONT_HERSHEY_SIMPLEX, 0.8, color=[0,200,00], thickness=2, lineType=cv2.LINE_AA)
                 cv2.imshow("YOLO Inference", annotated_frame)
 
 
