@@ -17,8 +17,10 @@ from ultralytics import YOLO
 
 
 # Open the video file
-#usb
-cap = cv2.VideoCapture(4)
+#usb dobot
+# cap = cv2.VideoCapture(4)
+#intern
+cap = cv2.VideoCapture(0)
 
 # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
 # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1088)
