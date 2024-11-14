@@ -1,10 +1,8 @@
 # - starts asyncio task task() in module.
 # - when module changes it will cancel the task, reload the module, and restart the task
 
-
 import asyncio
 import importlib
-import sys
 import os
 import traceback
 
@@ -19,10 +17,10 @@ def task_done(task):
         os._exit(1)
 
 #start module task, watch for changes, and restart task if needed
-async def auto_reload(module):
+async def auto_reload_task(module):
 
     #create initial task
-    print(f"autoreload: Starting main task() for '{module.__name__}'")
+    print(f"autoreload: Starting main task for '{module.__name__}'")
     task=asyncio.create_task(module.task())
     task.add_done_callback(task_done)
 
@@ -46,10 +44,4 @@ async def auto_reload(module):
                 task.add_done_callback(task_done)
 
                 print("autoreload: done")
-
-# async def auto_reload(module):
-#     try:
-#         await watch_module(module)
-#     except KeyboardInterrupt:
-#         print("Stopping module watcher...")
 
