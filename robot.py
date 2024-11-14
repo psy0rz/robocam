@@ -10,6 +10,10 @@ async def task():
         await  detector.result_ready.wait()
 
         output_frame=detector.result_frame
+
+        # center_x=detector.result.orig_shape[0]
+        print(detector.result.orig_shape)
+
         # print(detector.result)
         middles = []
         for r in detector.result.boxes.xyxy:
