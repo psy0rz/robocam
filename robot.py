@@ -2,6 +2,7 @@ import cv2
 
 import detector
 
+print("GEERT")
 
 async def task():
 

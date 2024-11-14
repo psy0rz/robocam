@@ -15,6 +15,8 @@ def task_done(task):
     except KeyboardInterrupt:
         print("Keyboard interrupt received, exiting...")
         os._exit(1)
+    except asyncio.CancelledError:
+        pass
 
 #start module task, watch for changes, and restart task if needed
 async def auto_reload_task(module):
