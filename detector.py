@@ -1,11 +1,18 @@
 import asyncio
+from asyncio import Event
 
-from ultralytics import YOLO
 import cv2
+from ultralytics import YOLO
 
+result=None
+result_frame=None
+result_ready=Event()
 
 
 async def task():
+    global result
+    global result_frame
+
     print("Loading model...")
     # trained on yolo11l-obb.pt LARGE
     # model = YOLO("/app/runs/obb/train23/weights/best.pt")
@@ -21,7 +28,7 @@ async def task():
 
     # Loop through the video frames
     try:
-        while cap.isOpened():
+        while True:
             # Read a frame from the video
             success, frame = cap.read()
 
@@ -33,33 +40,23 @@ async def task():
                 # Visualize the results on the frame
                 annotated_frame = results[0].plot(line_width=1)
 
-                # print(results[0].boxes)
-                middles = []
-                for r in results[0].boxes.xyxy:
-                    (x1, y1, x2, y2) = r
-                    x1 = int(x1)
-                    y1 = int(y1)
-                    x2 = int(x2)
-                    y2 = int(y2)
-                    # cv2.rectangle(annotated_frame, (x1,y1), (x2,y2), [255,255,255])
-
-                    center_x = int((x1 + x2) / 2)
-                    center_y = int((y1 + y2) / 2)
-                    cv2.circle(annotated_frame, (center_x, center_y), 5, (0, 0, 255), -1)  # Red filled circle
-                    middles.append([center_x, center_y])
+                result=results[0]
+                result_frame=frame
+                result_ready.set()
+                result_ready.clear()
 
                 # Display the annotated frame
                 cv2.imshow("YOLO Inference", annotated_frame)
 
-                # print(json.dumps(middles))
-                # publish(json.dumps(middles))
 
+                cv2.waitKey(1)
                 # Break the loop if 'q' is pressed
-                if cv2.waitKey(1) & 0xFF == ord("q"):
-                    break
+                # if cv2.waitKey(1) & 0xFF == ord("q"):
+                #     break
             else:
                 # Break the loop if the end of the video is reached
-                break
+                print("Failed to capture frame")
+
             await asyncio.sleep(0)
     except asyncio.CancelledError:
        cap.release()
