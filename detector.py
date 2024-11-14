@@ -9,6 +9,7 @@ result_frame=None
 result_ready=Event()
 
 
+
 async def task():
     global result
     global result_frame
@@ -20,13 +21,13 @@ async def task():
     # model = YOLO("/app/runs/obb/train24/weights/best.pt")
     # trained on yolo11n.pt small, zonder rotate
     model = YOLO("./runs/detect/train/weights/best.pt", verbose=True)
-    print("DONE")
+    print("Loading model done.")
 
-    cap = cv2.VideoCapture(0)
     # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
     # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1088)
 
     # Loop through the video frames
+    cap = cv2.VideoCapture(0)
     try:
         while True:
             # Read a frame from the video
@@ -35,7 +36,7 @@ async def task():
             if success:
                 # Run YOLO inference on the frame
                 # results = model.predict(frame, imgsz=(1920,1088), conf=0.8)
-                results = model.track(frame, conf=0.10, persist=True, verbose=False)
+                results = model.track(frame, conf=0.75, persist=True, verbose=False)
 
                 # Visualize the results on the frame
                 annotated_frame = results[0].plot(line_width=1)
@@ -44,6 +45,8 @@ async def task():
                 result_frame=frame
                 result_ready.set()
                 result_ready.clear()
+
+                cv2.addText(annotated_frame,f"{int(results[0].speed['inference'])} mS", (10,20),'', color=[255,255,255], pointSize=15)
 
                 # Display the annotated frame
                 cv2.imshow("YOLO Inference", annotated_frame)
@@ -58,7 +61,7 @@ async def task():
                 print("Failed to capture frame")
 
             await asyncio.sleep(0)
-    except asyncio.CancelledError:
+    finally:
        cap.release()
 
 
