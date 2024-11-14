@@ -25,8 +25,32 @@ def draw_corner_lines(img, pt1, pt2, color, thickness, line_length):
     cv2.line(img, (x2, y2), (x2, y2 - line_length), color, thickness)
 
 
+def draw_target_cross(img, center, color, thickness, line_length):
+    # Draw horizontal line
+    cv2.line(img, (center[0] - line_length, center[1]), (center[0] + line_length, center[1]), color, thickness)
+
+    # Draw vertical line
+    cv2.line(img, (center[0], center[1] - line_length), (center[0], center[1] + line_length), color, thickness)
+
+
+# Callback function for mouse click event
+
+last_clicked=[None,None]
+def click_event(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:  # Left mouse button click
+        print(f"Mouse clicked at position ({x}, {y})")
+        last_clicked[0]=x
+        last_clicked[1]=y
 
 async def task():
+
+    tracking_id=0
+
+    #find closed to lastclicked
+    closest_id=0
+    closest_x=0
+    closest_y=0
+
     while True:
         await  detector.result_ready.wait()
 
@@ -37,11 +61,12 @@ async def task():
         cam_center_y = int(detector.result.orig_shape[0] / 2)
         cv2.circle(output_frame, (cam_center_x, cam_center_y), 5, (255, 255, 255), 1, cv2.LINE_AA)
 
-        # print(detector.result)
+        # print(detector.result.boxes.id)
         middles = []
-        for r in detector.result.boxes.xyxy:
+        id_nr=0
+        for xyxy in detector.result.boxes.xyxy:
             # cv2.rectangle()
-            (x1, y1, x2, y2) = r
+            (x1, y1, x2, y2) = xyxy
             x1 = int(x1)
             y1 = int(y1)
             x2 = int(x2)
@@ -57,7 +82,8 @@ async def task():
             center_y = int((y1 + y2) / 2)
             middles.append([center_x, center_y])
 
-            # cv2.circle(output_frame, (center_x, center_y), 5, (0, 0, 255), -1)  # Red filled circle
+
+
 
             # determine color sampling region
             sample_x1 = int(center_x - w / 4)
@@ -84,4 +110,7 @@ async def task():
             #             (x1, y1-2), cv2.FONT_HERSHEY_SIMPLEX,
             #             0.3, color=[255, 255, 255], thickness=1, lineType=cv2.LINE_AA)
 
+            id_nr=id_nr+1
+
         cv2.imshow('Robot', output_frame)
+        cv2.setMouseCallback('Robot', click_event)
