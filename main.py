@@ -11,7 +11,10 @@ import json
 #trained on yolo11l-obb.pt LARGE
 #model = YOLO("/app/runs/obb/train23/weights/best.pt")
 #trained on yolo11n-obb.pt small
-model = YOLO("/app/runs/obb/train24/weights/best.pt")
+#model = YOLO("/app/runs/obb/train24/weights/best.pt")
+
+#trained on yolo11n.pt small, zonder rotate
+model = YOLO("/app/runs/detect/train/weights/best.pt")
 import cv2
 from ultralytics import YOLO
 
@@ -45,31 +48,24 @@ while cap.isOpened():
     if success:
         # Run YOLO inference on the frame
         # results = model.predict(frame, imgsz=(1920,1088), conf=0.8)
-        results = model.predict(frame, conf=0.8)
+        results = model.predict(frame, conf=0.9)
 
 
         # Visualize the results on the frame
         annotated_frame = results[0].plot(line_width=1)
 
-        # print(results[0].obb)
+        print(results[0].boxes)
         middles=[]
-        for xyxyxyxy in results[0].obb.xyxyxyxy:
-            (x1,y1)=xyxyxyxy[0]
-            (x2,y2)=xyxyxyxy[1]
-            (x3,y3)=xyxyxyxy[2]
-            (x4,y4)=xyxyxyxy[3]
+        for r in results[0].boxes.xyxy:
+            (x1,y1,x2,y2)=r
             x1=int(x1)
             y1=int(y1)
             x2=int(x2)
             y2=int(y2)
-            x3=int(x3)
-            y3=int(y3)
-            x4=int(x4)
-            y4=int(y4)
             # cv2.rectangle(annotated_frame, (x1,y1), (x2,y2), [255,255,255])
             
-            center_x = int((x1 + x2 + x3 + x4) / 4)
-            center_y = int((y1 + y2 + y3 + y4) / 4)
+            center_x = int((x1 + x2) / 2)
+            center_y = int((y1 + y2) / 2)
             cv2.circle(annotated_frame, (center_x, center_y), 5, (0, 0, 255), -1)  # Red filled circle
             middles.append([center_x, center_y])
 
