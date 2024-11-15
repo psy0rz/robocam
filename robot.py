@@ -12,28 +12,31 @@ last_clicked = [None, None]
 class Selector:
     # can search for a new object close to x,y,color, and keep tracking the ID when it has found one
     def __init__(self):
-        # search for a new object
+        # search for object with these specs
         self.search_point = None
         self.search_color = None
 
         # current object
-        self.track_id = None
-        self.current_point = (0,0)
+        # self.track_id = None
+        self.current_point = (0, 0)
         self.color = None
 
-    def update(self, point, color, id):
-        if (self.search_point is not None
-                and distance_between_points(point, self.search_point) < distance_between_points(point,
-                                                                                                self.current_point)):
-            self.color = color
-            self.track_id = id
+    def reset(self):
+        self.color = None
+        self.current_point = None
 
-        #update position
-        if id==self.track_id:
+    def update(self, point, color):
+        if self.current_point is None or (self.search_point is not None
+                                          and distance_between_points(point,
+                                                                      self.search_point) < distance_between_points(
+                    self.search_point,
+                    self.current_point)):
+            self.color = color
+            # self.track_id = id
             self.current_point = point
 
-
-        pass
+        # update position
+        # if id==self.track_id:
 
 
 selector = Selector()
@@ -61,10 +64,11 @@ async def task():
         cam_center_y = int(detector.result.orig_shape[0] / 2)
 
         if selector.search_point is None:
-            selector.search_point=(cam_center_x, cam_center_y)
+            selector.search_point = (cam_center_x, cam_center_y)
 
         # print(detector.result.boxes.id)
 
+        selector.reset()
         middles = []
         id_nr = 0
         # print (detector.result.obb)
@@ -85,7 +89,6 @@ async def task():
             center_x = int((x1 + x2) / 2)
             center_y = int((y1 + y2) / 2)
             middles.append([center_x, center_y])
-
 
             # determine color sampling region
             sample_x1 = int(center_x - w / 4)
@@ -116,14 +119,15 @@ async def task():
             #     tracking_center = (center_x, center_y)
 
             if detector.result.boxes.id is not None:
-                id=detector.result.boxes.id[id_nr]
-                selector.update((center_x, center_y), average_color, id)
+                id = detector.result.boxes.id[id_nr]
+                selector.update((center_x, center_y), average_color)
 
             id_nr = id_nr + 1
 
         cv2.circle(output_frame, selector.search_point, 5, (255, 255, 255), 1, cv2.LINE_AA)
 
-        draw_target_cross(output_frame, selector.current_point, (50, 50, 255), 1, 1000)
+        if (selector.current_point is not None):
+            draw_target_cross(output_frame, selector.current_point, (50, 50, 255), 1, 1000)
 
         last_clicked[0] = None
         cv2.imshow('Robot', output_frame)
