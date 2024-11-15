@@ -2,45 +2,7 @@ import cv2
 import numpy as np
 
 import detector
-
-def draw_corner_lines(img, pt1, pt2, color, thickness, line_length):
-    x1, y1 = pt1
-    x2, y2 = pt2
-
-    # Calculate corner points for small line segments
-    # Top-left corner horizontal and vertical lines
-    cv2.line(img, (x1, y1), (x1 + line_length, y1), color, thickness,)
-    cv2.line(img, (x1, y1), (x1, y1 + line_length), color, thickness)
-
-    # Top-right corner horizontal and vertical lines
-    cv2.line(img, (x2, y1), (x2 - line_length, y1), color, thickness)
-    cv2.line(img, (x2, y1), (x2, y1 + line_length), color, thickness)
-
-    # Bottom-left corner horizontal and vertical lines
-    cv2.line(img, (x1, y2), (x1 + line_length, y2), color, thickness)
-    cv2.line(img, (x1, y2), (x1, y2 - line_length), color, thickness)
-
-    # Bottom-right corner horizontal and vertical lines
-    cv2.line(img, (x2, y2), (x2 - line_length, y2), color, thickness)
-    cv2.line(img, (x2, y2), (x2, y2 - line_length), color, thickness)
-
-
-def draw_target_cross(img, center, color, thickness, line_length):
-    # Draw horizontal line
-    cv2.line(img, (center[0] - line_length, center[1]), (center[0] + line_length, center[1]), color, thickness)
-
-    # Draw vertical line
-    cv2.line(img, (center[0], center[1] - line_length), (center[0], center[1] + line_length), color, thickness)
-
-def distance_between_points(point1, point2):
-    # Convert points to NumPy arrays (OpenCV works well with NumPy)
-    point1 = np.array(point1, dtype=np.float32)
-    point2 = np.array(point2, dtype=np.float32)
-
-    # Calculate the Euclidean distance using OpenCV
-    distance = cv2.norm(point1, point2, cv2.NORM_L2)
-    return distance
-
+from util import draw_corner_lines, draw_target_cross, distance_between_points
 
 # Callback function for mouse click event
 
@@ -51,18 +13,22 @@ def click_event(event, x, y, flags, param):
         last_clicked[0]=x
         last_clicked[1]=y
 
+
 async def task():
 
     tracking_id=0
     tracking_center=(-1,-1)
 
+    cv2.namedWindow("Robot", flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
+
 
     while True:
         await  detector.result_ready.wait()
 
-        output_frame = detector.result_frame.copy()
         if detector.result_frame is None:
             continue
+
+        output_frame = detector.result_frame.copy()
 
         # camera center
         cam_center_x = int(detector.result.orig_shape[1] / 2)
@@ -98,7 +64,7 @@ async def task():
             middles.append([center_x, center_y])
 
             if last_clicked[0] is not None:
-                if distance_between_points( last_clicked, (center_x,center_y)) < distance_between_points(last_clicked, closest_point):
+                if distance_between_points(last_clicked, (center_x, center_y)) < distance_between_points(last_clicked, closest_point):
                     closest_point=(center_x,center_y)
                     closest_id=detector.result.boxes.id[id_nr]
 
@@ -120,7 +86,7 @@ async def task():
 
             # cv2.rectangle(output_frame, (sample_x1, sample_y1), (sample_x2, sample_y2), [255, 255, 255],
             #               lineType=cv2.LINE_AA, thickness=1)
-            draw_corner_lines(output_frame,(sample_x1, sample_y1), (sample_x2, sample_y2), [255, 255, 255],1, 5 )
+            draw_corner_lines(output_frame, (sample_x1, sample_y1), (sample_x2, sample_y2), [255, 255, 255], 1, 5)
 
             #color label
             # cv2.rectangle(output_frame, (x1, y1), (x1 + 80, y1 - 12), [255, 0, 0], lineType=cv2.LINE_AA, thickness=-1)
@@ -135,7 +101,7 @@ async def task():
 
             id_nr=id_nr+1
 
-        draw_target_cross(output_frame, tracking_center, (0,0,255), 1,1000)
+        draw_target_cross(output_frame, tracking_center, (50, 50, 255), 1, 1000)
 
 
         if closest_id!=-1:

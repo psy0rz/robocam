@@ -14,15 +14,17 @@ async def task():
     global result
     global result_frame
 
+    cv2.namedWindow("YOLO Inference", flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
+
     print("Loading model...")
     # trained on yolo11l-obb.pt LARGE
     # model = YOLO("./runs/obb/train23/weights/best.pt")
     # trained on yolo11n-obb.pt small
-    #model = YOLO("./runs/obb/train24/weights/best.pt")
+    # model = YOLO("./runs/obb/train24/weights/best.pt")
     # trained on yolo11n.pt small, zonder rotate
-    # model = YOLO("./runs/detect/train/weights/best.pt", verbose=True)
+    model = YOLO("./runs/detect/train/weights/best.pt")
 
-    model = YOLO("./runs/obb/train34/weights/best.pt")
+    # model = YOLO("./runs/obb/train34/weights/best.pt")
 
 
 
@@ -32,7 +34,7 @@ async def task():
     # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1088)
 
     # Loop through the video frames
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(4)
     try:
         while True:
             # Read a frame from the video
@@ -42,7 +44,7 @@ async def task():
                 # Run YOLO inference on the frame
                 # results = model.predict(frame, imgsz=(1920,1088), conf=0.8)
                 # results = model.track(frame, conf=0.5, persist=True, verbose=False)
-                results = model.track(frame, conf=0.3, persist=True, verbose=False)
+                results = model.track(frame, conf=0.9, persist=True, verbose=False)
 
                 # Visualize the results on the frame
                 annotated_frame = results[0].plot(line_width=1)
@@ -70,13 +72,4 @@ async def task():
     finally:
        cap.release()
 
-
-
-# task=asyncio.create_task(loop())
-
-# def on_unload():
-#
-#     # Release the video capture object and close the display window
-#     # task.cancel()
-#     cap.release()
 
