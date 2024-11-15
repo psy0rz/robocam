@@ -46,3 +46,6 @@ def distance_between_points(point1, point2):
     # # Calculate the Euclidean distance using OpenCV
     # distance = cv2.norm(point1, point2, cv2.NORM_L2)
     # return distance
+
+
+
