@@ -6,21 +6,21 @@ from util import draw_corner_lines, draw_target_cross, distance_between_points
 
 # Callback function for mouse click event
 
-last_clicked=[None,None]
+last_clicked = [None, None]
+
+
 def click_event(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:  # Left mouse button click
         print(f"Mouse clicked at position ({x}, {y})")
-        last_clicked[0]=x
-        last_clicked[1]=y
+        last_clicked[0] = x
+        last_clicked[1] = y
 
 
 async def task():
-
-    tracking_id=0
-    tracking_center=(-1,-1)
+    tracking_id = 0
+    tracking_center = (-1, -1)
 
     cv2.namedWindow("Robot", flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
-
 
     while True:
         await  detector.result_ready.wait()
@@ -42,7 +42,7 @@ async def task():
         closest_point = (-10000, -10000)
 
         middles = []
-        id_nr=0
+        id_nr = 0
         # print (detector.result.obb)
         # for xyxy in detector.result.boxes.xyxy:
         for xyxy in detector.result.boxes.xyxy:
@@ -56,7 +56,7 @@ async def task():
             w = abs(x2 - x1)
             h = abs(y2 - y1)
 
-            #normal yolo outline
+            # normal yolo outline
             draw_corner_lines(output_frame, (x1, y1), (x2, y2), (0, 0, 0), 1, 5)
 
             center_x = int((x1 + x2) / 2)
@@ -64,10 +64,10 @@ async def task():
             middles.append([center_x, center_y])
 
             if last_clicked[0] is not None:
-                if distance_between_points(last_clicked, (center_x, center_y)) < distance_between_points(last_clicked, closest_point):
-                    closest_point=(center_x,center_y)
-                    closest_id=detector.result.boxes.id[id_nr]
-
+                if distance_between_points(last_clicked, (center_x, center_y)) < distance_between_points(last_clicked,
+                                                                                                         closest_point):
+                    closest_point = (center_x, center_y)
+                    closest_id = detector.result.boxes.id[id_nr]
 
             # determine color sampling region
             sample_x1 = int(center_x - w / 4)
@@ -78,7 +78,6 @@ async def task():
             # average color of this region
             sample_image = detector.result_frame[sample_y1:sample_y2, sample_x1:sample_x2]
             average_color = np.mean(sample_image, axis=(0, 1))
-            # print(average_color)
 
             # color box
             cv2.rectangle(output_frame, (sample_x1, sample_y1), (sample_x2, sample_y2), average_color,
@@ -88,25 +87,23 @@ async def task():
             #               lineType=cv2.LINE_AA, thickness=1)
             draw_corner_lines(output_frame, (sample_x1, sample_y1), (sample_x2, sample_y2), [255, 255, 255], 1, 5)
 
-            #color label
+            # color label
             # cv2.rectangle(output_frame, (x1, y1), (x1 + 80, y1 - 12), [255, 0, 0], lineType=cv2.LINE_AA, thickness=-1)
             # cv2.putText(output_frame, f" r{average_color[2]:.0f} g{average_color[1]:.0f} b{average_color[0]:.0f}",
             #             (x1, y1-2), cv2.FONT_HERSHEY_SIMPLEX,
             #             0.3, color=[255, 255, 255], thickness=1, lineType=cv2.LINE_AA)
 
-            #this is the one we track?
-            if detector.result.boxes.id is not None and tracking_id==detector.result.boxes.id[id_nr]:
-                tracking_center=(center_x, center_y)
+            # this is the one we track?
+            if detector.result.boxes.id is not None and tracking_id == detector.result.boxes.id[id_nr]:
+                tracking_center = (center_x, center_y)
 
-
-            id_nr=id_nr+1
+            id_nr = id_nr + 1
 
         draw_target_cross(output_frame, tracking_center, (50, 50, 255), 1, 1000)
 
+        if closest_id != -1:
+            tracking_id = closest_id
 
-        if closest_id!=-1:
-            tracking_id=closest_id
-
-        last_clicked[0]=None
+        last_clicked[0] = None
         cv2.imshow('Robot', output_frame)
         cv2.setMouseCallback('Robot', click_event)
