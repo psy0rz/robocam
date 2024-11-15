@@ -16,11 +16,16 @@ async def task():
 
     print("Loading model...")
     # trained on yolo11l-obb.pt LARGE
-    # model = YOLO("/app/runs/obb/train23/weights/best.pt")
+    # model = YOLO("./runs/obb/train23/weights/best.pt")
     # trained on yolo11n-obb.pt small
-    # model = YOLO("/app/runs/obb/train24/weights/best.pt")
+    #model = YOLO("./runs/obb/train24/weights/best.pt")
     # trained on yolo11n.pt small, zonder rotate
-    model = YOLO("./runs/detect/train/weights/best.pt", verbose=True)
+    # model = YOLO("./runs/detect/train/weights/best.pt", verbose=True)
+
+    model = YOLO("./runs/obb/train34/weights/best.pt")
+
+
+
     print("Loading model done.")
 
     # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
@@ -36,7 +41,8 @@ async def task():
             if success:
                 # Run YOLO inference on the frame
                 # results = model.predict(frame, imgsz=(1920,1088), conf=0.8)
-                results = model.track(frame, conf=0.5, persist=True, verbose=False)
+                # results = model.track(frame, conf=0.5, persist=True, verbose=False)
+                results = model.track(frame, conf=0.3, persist=True, verbose=False)
 
                 # Visualize the results on the frame
                 annotated_frame = results[0].plot(line_width=1)

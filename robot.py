@@ -77,6 +77,8 @@ async def task():
 
         middles = []
         id_nr=0
+        # print (detector.result.obb)
+        # for xyxy in detector.result.boxes.xyxy:
         for xyxy in detector.result.boxes.xyxy:
             # cv2.rectangle()
             (x1, y1, x2, y2) = xyxy
