@@ -9,17 +9,43 @@ from util import draw_corner_lines, draw_target_cross, distance_between_points
 last_clicked = [None, None]
 
 
+class Selector:
+    # can search for a new object close to x,y,color, and keep tracking the ID when it has found one
+    def __init__(self):
+        # search for a new object
+        self.search_point = None
+        self.search_color = None
+
+        # current object
+        self.track_id = None
+        self.current_point = (0,0)
+        self.color = None
+
+    def update(self, point, color, id):
+        if (self.search_point is not None
+                and distance_between_points(point, self.search_point) < distance_between_points(point,
+                                                                                                self.current_point)):
+            self.color = color
+            self.track_id = id
+
+        #update position
+        if id==self.track_id:
+            self.current_point = point
+
+
+        pass
+
+
+selector = Selector()
+
+
 def click_event(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:  # Left mouse button click
         print(f"Mouse clicked at position ({x}, {y})")
-        last_clicked[0] = x
-        last_clicked[1] = y
+        selector.search_point = (x, y)
 
 
 async def task():
-    tracking_id = 0
-    tracking_center = (-1, -1)
-
     cv2.namedWindow("Robot", flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
 
     while True:
@@ -33,20 +59,17 @@ async def task():
         # camera center
         cam_center_x = int(detector.result.orig_shape[1] / 2)
         cam_center_y = int(detector.result.orig_shape[0] / 2)
-        cv2.circle(output_frame, (cam_center_x, cam_center_y), 5, (255, 255, 255), 1, cv2.LINE_AA)
+
+        if selector.search_point is None:
+            selector.search_point=(cam_center_x, cam_center_y)
 
         # print(detector.result.boxes.id)
-
-        # find closed to lastclicked
-        closest_id = -1
-        closest_point = (-10000, -10000)
 
         middles = []
         id_nr = 0
         # print (detector.result.obb)
         # for xyxy in detector.result.boxes.xyxy:
         for xyxy in detector.result.boxes.xyxy:
-            # cv2.rectangle()
             (x1, y1, x2, y2) = xyxy
             x1 = int(x1)
             y1 = int(y1)
@@ -63,11 +86,6 @@ async def task():
             center_y = int((y1 + y2) / 2)
             middles.append([center_x, center_y])
 
-            if last_clicked[0] is not None:
-                if distance_between_points(last_clicked, (center_x, center_y)) < distance_between_points(last_clicked,
-                                                                                                         closest_point):
-                    closest_point = (center_x, center_y)
-                    closest_id = detector.result.boxes.id[id_nr]
 
             # determine color sampling region
             sample_x1 = int(center_x - w / 4)
@@ -94,15 +112,18 @@ async def task():
             #             0.3, color=[255, 255, 255], thickness=1, lineType=cv2.LINE_AA)
 
             # this is the one we track?
-            if detector.result.boxes.id is not None and tracking_id == detector.result.boxes.id[id_nr]:
-                tracking_center = (center_x, center_y)
+            # if detector.result.boxes.id is not None and tracking_id == detector.result.boxes.id[id_nr]:
+            #     tracking_center = (center_x, center_y)
+
+            if detector.result.boxes.id is not None:
+                id=detector.result.boxes.id[id_nr]
+                selector.update((center_x, center_y), average_color, id)
 
             id_nr = id_nr + 1
 
-        draw_target_cross(output_frame, tracking_center, (50, 50, 255), 1, 1000)
+        cv2.circle(output_frame, selector.search_point, 5, (255, 255, 255), 1, cv2.LINE_AA)
 
-        if closest_id != -1:
-            tracking_id = closest_id
+        draw_target_cross(output_frame, selector.current_point, (50, 50, 255), 1, 1000)
 
         last_clicked[0] = None
         cv2.imshow('Robot', output_frame)

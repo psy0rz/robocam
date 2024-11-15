@@ -9,6 +9,8 @@ result_frame=None
 result_ready=Event()
 
 
+frame_delay=0
+
 
 async def task():
     global result
@@ -68,7 +70,7 @@ async def task():
                 # Break the loop if the end of the video is reached
                 print("Failed to capture frame")
 
-            await asyncio.sleep(0)
+            await asyncio.sleep(frame_delay)
     finally:
        cap.release()
 
