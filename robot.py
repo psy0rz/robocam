@@ -23,16 +23,15 @@ class Selector:
         self.current_point = None
 
     def update(self, point, color_name):
-        if self.search_color is not None and color_name!=self.search_color:
+        if self.search_color is not None and color_name != self.search_color:
             return
 
         if self.current_point is None or (self.search_point is not None
-                                      and distance_between_points(point,
-                                                                  self.search_point) < distance_between_points(
-                self.search_point,
-                self.current_point)):
-
-                self.current_point = point
+                                          and distance_between_points(point,
+                                                                      self.search_point) < distance_between_points(
+                    self.search_point,
+                    self.current_point)):
+            self.current_point = point
 
 
 selector = Selector()
@@ -47,7 +46,7 @@ def click_event(event, x, y, flags, param):
 async def task():
     cv2.namedWindow("Robot", flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
 
-    selector.search_color="orange"
+    selector.search_color = "orange"
 
     while True:
         await  detector.result_ready.wait()
@@ -98,21 +97,18 @@ async def task():
             sample_image = detector.result_frame[sample_y1:sample_y2, sample_x1:sample_x2]
             average_color = np.mean(sample_image, axis=(0, 1))
 
-            #remapt to rgb
-            average_color = ( average_color[2], average_color[1], average_color[0])
-
+            # remapt to rgb
+            average_color = (average_color[2], average_color[1], average_color[0])
 
             draw_corner_lines(output_frame, (sample_x1, sample_y1), (sample_x2, sample_y2), [255, 255, 255], 1, 5)
 
-
-            (color_name, neasest_color)=colormapper.find_closest_color(average_color)
+            (color_name, neasest_color) = colormapper.find_closest_color(average_color)
 
             # color label
             cv2.rectangle(output_frame, (x1, y1), (x1 + 80, y1 - 12), [255, 0, 0], lineType=cv2.LINE_AA, thickness=-1)
             cv2.putText(output_frame, color_name,
-                        (x1, y1-2), cv2.FONT_HERSHEY_SIMPLEX,
+                        (x1, y1 - 2), cv2.FONT_HERSHEY_SIMPLEX,
                         0.3, color=[255, 255, 255], thickness=1, lineType=cv2.LINE_AA)
-
 
             if detector.result.boxes.id is not None:
                 id = detector.result.boxes.id[id_nr]
