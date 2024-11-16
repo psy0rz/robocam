@@ -7,7 +7,6 @@ import colormapper
 
 # Callback function for mouse click event
 
-last_clicked = [None, None]
 
 
 class Selector:
@@ -121,6 +120,5 @@ async def task():
         if (selector.current_point is not None):
             draw_target_cross(output_frame, selector.current_point, (50, 50, 255), 1, 1000)
 
-        last_clicked[0] = None
         cv2.imshow('Robot', output_frame)
         cv2.setMouseCallback('Robot', click_event)
