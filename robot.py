@@ -11,17 +11,20 @@ import colormapper
 
 selector = Selector()
 
+mouse_clicked=[0, 0]
 
 def click_event(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:  # Left mouse button click
         print(f"Mouse clicked at position ({x}, {y})")
-        selector.search_point = (x, y)
+        # selector.search_point = (x, y)
+        mouse_clicked[0]=x
+        mouse_clicked[1]=y
 
 
 async def task():
     cv2.namedWindow("Robot", flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
 
-    selector.search_color = "orange"
+    # selector.search_color = "orange"
 
     while True:
         await  detector.result_ready.wait()
@@ -90,6 +93,24 @@ async def task():
                 selector.update((center_x, center_y), color_name)
 
             id_nr = id_nr + 1
+
+
+            # robot arm
+
+            #simulate robot pos with mouse (middle is 0,0)
+            robot_x=mouse_clicked[0]-int(detector.result.orig_shape[1] / 2)
+            robot_y=mouse_clicked[1]-int(detector.result.orig_shape[0] / 2)
+
+            #convert robot coords to pixel coords
+            def robot_to_pixel( point ):
+
+
+
+
+
+
+
+
 
         cv2.circle(output_frame, selector.search_point, 5, (255, 255, 255), 1, cv2.LINE_AA)
 
