@@ -34,18 +34,4 @@ def draw_target_cross(img, center, color, thickness, line_length):
     cv2.line(img, (center[0], center[1] - line_length), (center[0], center[1] + line_length), color, thickness)
 
 
-def distance_between_points(point1, point2):
-    # dist=cv2.norm(np.array(point1) - np.array(point2))
-    dist=math.sqrt((point2[0] - point1[0]) ** 2 + (point2[1] - point1[1]) ** 2)
-
-    return dist
-    # # Convert points to NumPy arrays (OpenCV works well with NumPy)
-    # point1 = np.array(point1, dtype=np.float32)
-    # point2 = np.array(point2, dtype=np.float32)
-    #
-    # # Calculate the Euclidean distance using OpenCV
-    # distance = cv2.norm(point1, point2, cv2.NORM_L2)
-    # return distance
-
-
 

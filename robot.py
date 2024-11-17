@@ -1,7 +1,11 @@
+import math
+
 import cv2
 import numpy as np
+from math import sqrt
 
 import detector
+from calulate import cam_position
 from selector import Selector
 from util import draw_corner_lines, draw_target_cross
 import colormapper
@@ -94,28 +98,24 @@ async def task():
 
             id_nr = id_nr + 1
 
-
-            # robot arm
-
-            #simulate robot pos with mouse (middle is 0,0)
-            robot_x=mouse_clicked[0]-int(detector.result.orig_shape[1] / 2)
-            robot_y=mouse_clicked[1]-int(detector.result.orig_shape[0] / 2)
-
-            #convert robot coords to pixel coords
-            def robot_to_pixel( point ):
-
-
-
-
-
-
-
-
-
         cv2.circle(output_frame, selector.search_point, 5, (255, 255, 255), 1, cv2.LINE_AA)
 
         if (selector.current_point is not None):
             draw_target_cross(output_frame, selector.current_point, (50, 50, 255), 1, 1000)
+
+        ###############3# robot arm
+
+
+        #calculate coordinates of the cam, from robot arm coords
+
+        #simulate robot pos with mouse (middle is 0,0)
+        robot_x=mouse_clicked[0]-int(detector.result.orig_shape[1] / 2)
+        robot_y=mouse_clicked[1]-int(detector.result.orig_shape[0] / 2)
+        robot_x=100
+        robot_y=150
+
+        cv2.line( output_frame, ( 0,0 ), (robot_x, robot_y), (255,255,255), 4)
+        cv2.line( output_frame, ( 0,0 ), cam_position((robot_x, robot_y)), (0,0,255), 1)
 
         cv2.imshow('Robot', output_frame)
         cv2.setMouseCallback('Robot', click_event)
