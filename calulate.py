@@ -9,9 +9,11 @@ def distance_between_points(point1, point2):
 
 
 CAM_OFFSET = 50
+
+
 # calculate the camera position from the robot arm position (real world coords)
-def cam_position(point, invert=False):
-    arm_len = math.sqrt(point[0] ** 2 + point[1] ** 2)
+def cam_position(robot_pos, invert=False):
+    arm_len = math.sqrt(robot_pos[0] ** 2 + robot_pos[1] ** 2)
 
     if invert:
         arm_len_cam = arm_len - CAM_OFFSET
@@ -20,4 +22,11 @@ def cam_position(point, invert=False):
 
     arm_factor = arm_len_cam / arm_len
 
-    return int(point[0] * arm_factor), int(point[1] * arm_factor)
+    return int(robot_pos[0] * arm_factor), int(robot_pos[1] * arm_factor)
+
+
+# calculate the camera rotation angle from the robot arm position
+def cam_angle(robot_pos):
+    a = math.atan(robot_pos[1] / robot_pos[0])
+
+    return a

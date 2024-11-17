@@ -2,10 +2,9 @@ import math
 
 import cv2
 import numpy as np
-from math import sqrt
 
 import detector
-from calulate import cam_position
+from calulate import cam_angle, cam_position
 from selector import Selector
 from util import draw_corner_lines, draw_target_cross
 import colormapper
@@ -15,14 +14,15 @@ import colormapper
 
 selector = Selector()
 
-mouse_clicked=[0, 0]
+mouse_clicked = [100, 100]
+
 
 def click_event(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:  # Left mouse button click
         print(f"Mouse clicked at position ({x}, {y})")
         # selector.search_point = (x, y)
-        mouse_clicked[0]=x
-        mouse_clicked[1]=y
+        mouse_clicked[0] = x
+        mouse_clicked[1] = y
 
 
 async def task():
@@ -105,17 +105,33 @@ async def task():
 
         ###############3# robot arm
 
+        # calculate coordinates of the cam, from robot arm coords
 
-        #calculate coordinates of the cam, from robot arm coords
+        # simulate robot pos with mouse (middle is 0,0)
+        robot_x = mouse_clicked[0]
+        robot_y = mouse_clicked[1]
+        # robot_x=100
+        # robot_y=150
 
-        #simulate robot pos with mouse (middle is 0,0)
-        robot_x=mouse_clicked[0]-int(detector.result.orig_shape[1] / 2)
-        robot_y=mouse_clicked[1]-int(detector.result.orig_shape[0] / 2)
-        robot_x=100
-        robot_y=150
+        #
 
-        cv2.line( output_frame, ( 0,0 ), (robot_x, robot_y), (255,255,255), 4)
-        cv2.line( output_frame, ( 0,0 ), cam_position((robot_x, robot_y)), (0,0,255), 1)
+        # center of the current image
+        center = cam_position((robot_x, robot_y))
+        angle = cam_angle((robot_x, robot_y))
+
+        # caculate the on screen location from robot coords
+        def robot_to_cam(cam_center, cam_angle, robot_pos):
+
+            # offset from screen center (robot coords)
+            offset = (robot_pos[0] - cam_center[0], robot_pos[1] - cam_center[1])
+
+
+
+
+        cv2.line(output_frame, (0, 0), (robot_x, robot_y), (255, 255, 255), 4)
+        cv2.line(output_frame, (0, 0), cam_position((robot_x, robot_y)), (0, 0, 255), 1)
 
         cv2.imshow('Robot', output_frame)
         cv2.setMouseCallback('Robot', click_event)
+
+        print(cam_angle(mouse_clicked))
