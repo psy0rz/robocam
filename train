@@ -1,0 +1,20 @@
+#!/bin/bash
+
+#OBB (rotatie)
+#yolo obb train data=/home/psy/datasets/cubes/data.yaml model=yolo11n-obb.pt  epochs=100 imgsz=640
+
+#normaal
+#yolo detect train data=/home/psy/datasets/cubes/data.yaml model=yolo11n.pt  epochs=100 imgsz=640
+
+#OBB cubes2
+#yolo obb train data=/home/psy/datasets/cubes2/data.yaml model=./runs/obb/train24/weights/best.pt  epochs=10 imgsz=640
+
+
+#yolo obb train data=/home/psy/datasets/cubes/data.yaml model=yolo11n-obb.pt  epochs=10 imgsz=640 pretrained=true
+
+#yolo obb train data=/home/psy/datasets/cubes2/data.yaml model=./runs/obb/train30/weights/best.pt  epochs=10 imgsz=640 pretrained=true
+
+#yolo obb train data=/home/psy/datasets/cubes/data.yaml model=./runs/obb/train31/weights/best.pt  epochs=10 imgsz=640 pretrained=true pretrained=true
+
+yolo obb train data=/home/psy/datasets/cubescombined/data.yaml model=yolo11n-obb.pt  epochs=100 imgsz=640
+
