@@ -155,7 +155,7 @@ async def task():
 
 
         def draw_grid(cam_center, cam_angle):
-            #FIXME: angle
+            #FIX: angle
 
             step=10
 
