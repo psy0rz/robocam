@@ -36,8 +36,8 @@ async def task():
     # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1088)
 
     # Loop through the video frames
-    cap = cv2.VideoCapture(0)
-    # cap = cv2.VideoCapture(4)
+    # cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(4)
     try:
         while True:
             # Read a frame from the video

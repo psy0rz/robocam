@@ -2,3 +2,10 @@ opencv-python
 ultralytics
 paho-mqtt
 watchfiles
+
+#dobot
+pyserial
+pynput
+colorama
+tictactoe_py
+readchar

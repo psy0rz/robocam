@@ -25,6 +25,7 @@ def cam_position(robot_pos, invert=False):
     return int(robot_pos[0] * arm_factor), int(robot_pos[1] * arm_factor)
 
 
+#NOTE: just get j1 from dobot itself instead of calculating
 # calculate the camera rotation angle from the robot arm position
 def cam_angle(robot_pos):
     a = math.atan(robot_pos[1] / robot_pos[0])

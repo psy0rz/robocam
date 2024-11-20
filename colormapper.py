@@ -4,16 +4,19 @@ color_list = [
     (0,0,255),
     (209, 89,11),
     (255,0,0),
-    (0,255,0),
     (150,150,150),
+    (250,200,50),
+    (0,180,180)
 ]
 
 color_labels = [
     "blue",
     "orange",
     "red",
+    "gray",
+    "yellow",
     "green",
-    "gray"
+
 ]
 
 color_tree = KDTree(color_list)

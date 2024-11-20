@@ -1,4 +1,5 @@
 #!/bin/bash
+
 xhost +
 docker build . --tag robocam || exit 1
 
