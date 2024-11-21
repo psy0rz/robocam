@@ -21,6 +21,7 @@ selector = Selector()
 mouse_clicked = [100, 100]
 
 
+
 def click_event(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:  # Left mouse button click
         print(f"Mouse clicked at position ({x}, {y})")
@@ -36,7 +37,7 @@ async def task():
     # robot.move_to_nowait(x=190,y=0,z=0)
     # robot.move_to_nowait(x=380,y=0,z=0)
     robot_middle = ((190 + 380) / 2, 0)
-    robot.move_to_nowait(x=robot_middle[0]-18, y=robot_middle[1]-8, z=0, r=90)
+    robot.move_to_nowait(x=robot_middle[0]-20, y=robot_middle[1]-4, z=0, r=90)
 
 
     # robot.move_to_nowait(x=200                    ,y=-200,z=0,r=90)
@@ -59,8 +60,8 @@ async def task():
         # calculate coordinates of the cam, from robot arm coords
 
         robot_pose = robot.get_pose()
-        robot_x_mm = int(robot_pose.position.x)
-        robot_y_mm = int(robot_pose.position.y)
+        robot_x_mm = (robot_pose.position.x)
+        robot_y_mm = (robot_pose.position.y)
         robot_angle_degrees = robot_pose.joints.j1
         # print(f"{robot_x_mm}, {robot_y_mm}, {robot_angle_degrees}")
 
