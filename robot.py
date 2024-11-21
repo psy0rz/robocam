@@ -37,7 +37,7 @@ async def task():
     # robot.move_to_nowait(x=190,y=0,z=0)
     # robot.move_to_nowait(x=380,y=0,z=0)
     robot_middle = ((190 + 380) / 2, 0)
-    robot.move_to_nowait(x=robot_middle[0]-20, y=robot_middle[1]-4, z=0, r=90)
+    robot.move_to_nowait(x=robot_middle[0]-0, y=robot_middle[1], z=0, r=90)
 
 
     # robot.move_to_nowait(x=200                    ,y=-200,z=0,r=90)
@@ -118,7 +118,7 @@ async def task():
 
             return int(x_screen), int(y_screen)
 
-        def calculate_camera_position(robot_position_mm, robot_angle_degrees):
+        def calculate_camera_position_mm(robot_position_mm, robot_angle_degrees):
             """
             Calculate the camera's position based on the suction cup's position, offset, and orientation.
 
@@ -144,7 +144,7 @@ async def task():
 
             return x_camera, y_camera
 
-        cam_center_mm = calculate_camera_position((robot_x_mm, robot_y_mm), robot_angle_degrees)
+        cam_center_mm = calculate_camera_position_mm((robot_x_mm, robot_y_mm), robot_angle_degrees)
         # print(f"robot={(robot_x_mm, robot_y_mm)} cam={cam_center_mm}")
 
         # fixed test point
@@ -169,12 +169,12 @@ async def task():
             for x in range(start_x, end_x, step):
                 screen_coord_start = robot_to_screen(cam_center_mm, cam_angle_degrees, (x, start_y))
                 screen_coord_end = robot_to_screen(cam_center_mm, cam_angle_degrees, (x, end_y - step))
-                cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255, 0), 1)
+                cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255, 0), 1, cv2.LINE_AA)
 
             for y in range(start_y, end_y, step):
                 screen_coord_start = robot_to_screen(cam_center_mm, cam_angle_degrees, (start_x, y))
                 screen_coord_end = robot_to_screen(cam_center_mm, cam_angle_degrees, (end_x - step, y))
-                cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255, 0), 1)
+                cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255, 0), 1,cv2.LINE_AA)
 
         draw_grid(cam_center_mm, robot_angle_degrees)
 
