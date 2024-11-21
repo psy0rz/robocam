@@ -10,7 +10,7 @@ result_frame=None
 result_ready=Event()
 
 
-frame_delay=0
+frame_delay=0.1
 
 
 async def task():

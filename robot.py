@@ -6,7 +6,7 @@ import numpy as np
 
 import calulate
 import detector
-from calulate import cam_angle, cam_position
+# from calulate import cam_angle, cam_position
 from dobot.dobotfun.dobotfun import DobotFun
 from selector import Selector
 from util import draw_corner_lines, draw_target_cross
@@ -32,12 +32,12 @@ async def task():
 
 
     robot = DobotFun()
-
+    # robot.home()
+    #
     # robot.move_to_nowait(x=190,y=0,z=0)
     # robot.move_to_nowait(x=380,y=0,z=0)
-    robot_middle=((190+380)/2, 0)
-    robot.move_to_nowait(x=robot_middle[0]+15
-                    ,y=robot_middle[1]-50,z=0,r=90)
+    robot_middle=((190+380)/2+10,0)
+    robot.move_to_nowait(x=robot_middle[0] +0                    ,y=robot_middle[1],z=0,r=90)
 
 
 
@@ -256,8 +256,10 @@ async def task():
 
 
         center=calculate_camera_position((robot_x, robot_y), robot_angle)
-        draw_grid(center, robot_angle)
+        # draw_grid(center, robot_angle)
 
+        #fixed test point
+        cv2.circle(output_frame, robot_to_screen(center, robot_angle, (250,0)), 15, (255, 255,255), 2, cv2.LINE_AA)
 
         #show robot arm position
         cv2.circle(output_frame, robot_to_screen(center, robot_angle, (robot_x,robot_y)), 15, (0, 255,255), 2, cv2.LINE_AA)
