@@ -6,6 +6,7 @@ import numpy as np
 
 import calulate
 import detector
+from calulate import cam_angle
 # from calulate import cam_angle, cam_position
 from dobot.dobotfun.dobotfun import DobotFun
 from selector import Selector
@@ -36,8 +37,15 @@ async def task():
     #
     # robot.move_to_nowait(x=190,y=0,z=0)
     # robot.move_to_nowait(x=380,y=0,z=0)
-    robot_middle=((190+380)/2+10,0)
+    robot_middle=((190+380)/2,10)
     robot.move_to_nowait(x=robot_middle[0] +0                    ,y=robot_middle[1],z=0,r=90)
+
+
+    robot.move_to_nowait(x=200                    ,y=-200,z=0,r=90)
+
+
+
+
 
 
 
@@ -56,137 +64,58 @@ async def task():
 
         output_frame = detector.result_frame.copy()
 
-        # camera center
-        screen_center_x = int(detector.result.orig_shape[1] / 2)
-        screen_center_y = int(detector.result.orig_shape[0] / 2)
-
-        if selector.search_point is None:
-            selector.search_point = (screen_center_x, screen_center_y)
-
-        # print(detector.result.boxes.id)
-
-        selector.reset()
-        middles = []
-        id_nr = 0
-        # print (detector.result.obb)
-        # for xyxy in detector.result.boxes.xyxy:
-        for xyxy in detector.result.boxes.xyxy:
-            (x1, y1, x2, y2) = xyxy
-            x1 = int(x1)
-            y1 = int(y1)
-            x2 = int(x2)
-            y2 = int(y2)
-
-            w = abs(x2 - x1)
-            h = abs(y2 - y1)
-
-
-            center_x = int((x1 + x2) / 2)
-            center_y = int((y1 + y2) / 2)
-            middles.append([center_x, center_y])
-
-            # determine color sampling region
-            sample_x1 = int(center_x - w / 4)
-            sample_x2 = int(center_x + w / 4)
-            sample_y1 = int(center_y - h / 4)
-            sample_y2 = int(center_y + h / 4)
-
-            # average color of this region
-            sample_image = detector.result_frame[sample_y1:sample_y2, sample_x1:sample_x2]
-            average_color = np.mean(sample_image, axis=(0, 1))
-
-            # remapt to rgb
-            average_color = (average_color[2], average_color[1], average_color[0])
-            (color_name, neasest_color) = colormapper.find_closest_color(average_color)
-
-            #probaly paper grid
-            if color_name=="gray":
-                continue
-
-            # normal yolo outline
-            draw_corner_lines(output_frame, (x1, y1), (x2, y2), (0, 0, 0), 1, 5)
-            draw_corner_lines(output_frame, (sample_x1, sample_y1), (sample_x2, sample_y2), [255, 255, 255], 1, 5)
-
-
-
-
-
-            # color label
-            cv2.rectangle(output_frame, (x1, y1), (x1 + 80, y1 - 12), [255, 0, 0], lineType=cv2.LINE_AA, thickness=-1)
-            cv2.putText(output_frame, color_name,
-                        (x1, y1 - 2), cv2.FONT_HERSHEY_SIMPLEX,
-                        0.3, color=[255, 255, 255], thickness=1, lineType=cv2.LINE_AA)
-
-            if detector.result.boxes.id is not None:
-                id = detector.result.boxes.id[id_nr]
-                selector.update((center_x, center_y), color_name)
-
-            id_nr = id_nr + 1
-
-        cv2.circle(output_frame, selector.search_point, 5, (255, 255, 255), 1, cv2.LINE_AA)
-
-        if (selector.current_point is not None):
-            draw_target_cross(output_frame, selector.current_point, (50, 50, 255), 1, 1000)
 
         ###############3# robot arm
 
         # calculate coordinates of the cam, from robot arm coords
 
 
-        # simulate robot pos with mouse (middle is 0,0)
         robot_pose=robot.get_pose()
-        robot_x = int(robot_pose.position.x)
-        robot_y = int(robot_pose.position.y)
-        robot_angle=robot_pose.joints.j1
-
-        # center = cam_position((robot_x, robot_y))
-
-        # cv2.putText(output_frame, f"robot={robot_x, robot_y}",
-        #             (screen_center_x,screen_center_y+100), cv2.FONT_HERSHEY_SIMPLEX,
-        #             0.3, color=[255, 255, 255], thickness=1, lineType=cv2.LINE_AA)
-        #
-        #
-        # cv2.putText(output_frame, f"cam={center} (robot degrees={robot_angle:.1f})",
-        #             (screen_center_x+10, screen_center_y), cv2.FONT_HERSHEY_SIMPLEX,
-        #             0.3, color=[255, 255, 255], thickness=1, lineType=cv2.LINE_AA)
+        robot_x_mm = int(robot_pose.position.x)
+        robot_y_mm = int(robot_pose.position.y)
+        robot_angle_degrees=robot_pose.joints.j1
+        # print(f"{robot_x_mm}, {robot_y_mm}, {robot_angle_degrees}")
 
 
-
-        # Example Usage
-        # Intrinsic camera matrix (example, update with your camera parameters)
+        #note: some trickyness since x and y are swapped for the robot
+        pixels_per_mm_x=4.64
+        pixels_per_mm_y=4.64
+        cam_center_x_pixels=320
+        cam_center_y_pixels=240
         camera_matrix = np.array([
-            [4.64, 0, 320],  # fx, 0, cx
-            [0, 4.64, 240],  # 0, fy, cy
+            [    pixels_per_mm_x,0, cam_center_x_pixels],
+            [  0,pixels_per_mm_y,    cam_center_y_pixels],
             [0, 0, 1]  # 0, 0, 1
         ])
 
-        camera_offset=[50,4]
+        camera_offset_mm=[50,10]
 
-        def robot_to_screen(robot_center, robot_angle, point):
+        def robot_to_screen(camera_center_mm, camera_angle_mm, point_mm):
             """
             Convert a real-world point to screen coordinates, accounting for the robot's camera position and orientation.
 
-            :param robot_center: Tuple (robot_x, robot_y) representing the camera's center in world units.
-            :param robot_angle: Camera rotation angle (in degrees, counterclockwise).
-            :param point: Tuple (point_x, point_y) representing the real-world point to project.
+            :param camera_center_mm: Tuple (robot_x, robot_y) representing the camera's center in world units.
+            :param camera_angle_mm: Camera rotation angle (in degrees, counterclockwise).
+            :param point_mm: Tuple (point_x, point_y) representing the real-world point to project.
             :param camera_matrix: Intrinsic camera matrix (3x3 numpy array).
             :return: Screen coordinates as a tuple (x_screen, y_screen).
             """
             # Convert angle to radians
-            angle_rad = np.radians(robot_angle)
+            cam_angle_rad = np.radians(camera_angle_mm)
 
             # Rotation matrix for the camera
             rotation_matrix = np.array([
-                [np.cos(angle_rad), -np.sin(angle_rad)],
-                [np.sin(angle_rad), np.cos(angle_rad)]
+                [np.cos(cam_angle_rad), -np.sin(cam_angle_rad)],
+                [np.sin(cam_angle_rad), np.cos(cam_angle_rad)]
             ])
 
             # Extract the coordinates
-            robot_y, robot_x = robot_center
-            point_y, point_x = point
+            cam_center_x, cam_center_y = camera_center_mm
+            point_x, point_y = point_mm
 
             # Adjust point to the camera's frame of reference (relative to camera center)
-            relative_coords = np.array([point_x - robot_x, point_y - robot_y])
+            # x and y axis swapped!
+            relative_coords = np.array([ -point_y + cam_center_y, -point_x + cam_center_x])
 
             # Rotate the adjusted coordinates into the camera's orientation
             rotated_coords = np.dot(rotation_matrix, relative_coords)
@@ -202,67 +131,70 @@ async def task():
             return int(x_screen), int(y_screen)
 
 
-        def calculate_camera_position(suction_cup_position, robot_angle):
+        def calculate_camera_position(robot_position_mm, robot_angle_degrees):
             """
             Calculate the camera's position based on the suction cup's position, offset, and orientation.
 
-            :param suction_cup_position: Tuple (x_suction, y_suction) representing the suction cup's global position.
+            :param robot_position_mm: Tuple (x_suction, y_suction) representing the suction cup's global position.
             :param camera_offset: Tuple (offset_x, offset_y) representing the camera's offset relative to the suction cup.
-            :param robot_angle: Robot's orientation angle in degrees.
+            :param robot_angle_degrees: Robot's orientation angle in degrees.
             :return: Tuple (x_camera, y_camera) representing the camera's global position.
             """
             # Unpack inputs
-            x_suction, y_suction = suction_cup_position
-            offset_x, offset_y = camera_offset
+            x_suction, y_suction = robot_position_mm
+            offset_x, offset_y = camera_offset_mm
 
             # Convert angle to radians
-            angle_rad = np.radians(robot_angle)
+            angle_rad = np.radians(robot_angle_degrees)
 
             # Rotate the offset
             offset_x_rotated = offset_x * np.cos(angle_rad) - offset_y * np.sin(angle_rad)
             offset_y_rotated = offset_x * np.sin(angle_rad) + offset_y * np.cos(angle_rad)
 
             # Calculate camera position
-            x_camera = x_suction - offset_x_rotated
-            y_camera = y_suction - offset_y_rotated
+            x_camera = x_suction + offset_x_rotated
+            y_camera = y_suction + offset_y_rotated
 
             return x_camera, y_camera
 
 
-
-
-        def draw_grid(cam_center, cam_angle):
-            #FIX: angle
-
-            step=10
-
-            start_x=int(round(cam_center[0],-1)-50)
-            end_x=int(round(cam_center[0],-1)+50)
-
-            start_y=int(round(cam_center[1],-1)-50)
-            end_y=int(round(cam_center[1],-1)+50)
-
-
-            for x in range(start_x, end_x, step):
-                screen_coord_start=robot_to_screen(cam_center, cam_angle, (x,start_y))
-                screen_coord_end=robot_to_screen(cam_center, cam_angle, (x,end_y-step))
-                cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255,0), 1)
-
-            for y in range(start_y, end_y, step):
-                screen_coord_start = robot_to_screen(cam_center, cam_angle, (start_x, y))
-                screen_coord_end = robot_to_screen(cam_center, cam_angle, (end_x-step, y))
-                cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255, 0), 1)
-
-
-
-        center=calculate_camera_position((robot_x, robot_y), robot_angle)
+        cam_center_mm=calculate_camera_position((robot_x_mm, robot_y_mm), robot_angle_degrees)
+        # print(f"robot={(robot_x_mm, robot_y_mm)} cam={cam_center_mm}")
         # draw_grid(center, robot_angle)
 
         #fixed test point
-        cv2.circle(output_frame, robot_to_screen(center, robot_angle, (250,0)), 15, (255, 255,255), 2, cv2.LINE_AA)
+        # cv2.circle(output_frame, robot_to_screen(center, robot_angle, (250,0)), 15, (255, 255,255), 2, cv2.LINE_AA)
 
-        #show robot arm position
-        cv2.circle(output_frame, robot_to_screen(center, robot_angle, (robot_x,robot_y)), 15, (0, 255,255), 2, cv2.LINE_AA)
+        #show suckion cup position
+        cv2.circle(output_frame, robot_to_screen(cam_center_mm, robot_angle_degrees, (robot_x_mm,robot_y_mm)), 15, (0, 255,255), 2, cv2.LINE_AA)
+
+        cv2.circle(output_frame, (320,240), 5, (255, 255, 255), 1, cv2.LINE_AA)
+
+
+        # def draw_grid(cam_center, cam_angle):
+        #     #FIX: angle
+        #
+        #     step=10
+        #
+        #     start_x=int(round(cam_center[0],-1)-50)
+        #     end_x=int(round(cam_center[0],-1)+50)
+        #
+        #     start_y=int(round(cam_center[1],-1)-50)
+        #     end_y=int(round(cam_center[1],-1)+50)
+        #
+        #
+        #     for x in range(start_x, end_x, step):
+        #         screen_coord_start=robot_to_screen(cam_center, cam_angle, (x,start_y))
+        #         screen_coord_end=robot_to_screen(cam_center, cam_angle, (x,end_y-step))
+        #         cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255,0), 1)
+        #
+        #     for y in range(start_y, end_y, step):
+        #         screen_coord_start = robot_to_screen(cam_center, cam_angle, (start_x, y))
+        #         screen_coord_end = robot_to_screen(cam_center, cam_angle, (end_x-step, y))
+        #         cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255, 0), 1)
+        #
+
+
 
         # simulated robot arm (top left click line thingy)
         # cv2.line(output_frame, (0, 0), (robot_x, robot_y), (255, 255, 255), 4)
@@ -272,3 +204,84 @@ async def task():
         # print(cam_angle(mouse_clicked))
         cv2.imshow('Robot', output_frame)
         cv2.setMouseCallback('Robot', click_event)
+
+        # # camera center
+        # screen_center_x = int(detector.result.orig_shape[1] / 2)
+        # screen_center_y = int(detector.result.orig_shape[0] / 2)
+        #
+        # if selector.search_point is None:
+        #     selector.search_point = (screen_center_x, screen_center_y)
+        #
+        # # print(detector.result.boxes.id)
+        #
+        # selector.reset()
+        # middles = []
+        # id_nr = 0
+        # # print (detector.result.obb)
+        # # for xyxy in detector.result.boxes.xyxy:
+        # for xyxy in detector.result.boxes.xyxy:
+        #     (x1, y1, x2, y2) = xyxy
+        #     x1 = int(x1)
+        #     y1 = int(y1)
+        #     x2 = int(x2)
+        #     y2 = int(y2)
+        #
+        #     w = abs(x2 - x1)
+        #     h = abs(y2 - y1)
+        #
+        #
+        #     center_x = int((x1 + x2) / 2)
+        #     center_y = int((y1 + y2) / 2)
+        #     middles.append([center_x, center_y])
+        #
+        #     # determine color sampling region
+        #     sample_x1 = int(center_x - w / 4)
+        #     sample_x2 = int(center_x + w / 4)
+        #     sample_y1 = int(center_y - h / 4)
+        #     sample_y2 = int(center_y + h / 4)
+        #
+        #     # average color of this region
+        #     sample_image = detector.result_frame[sample_y1:sample_y2, sample_x1:sample_x2]
+        #     average_color = np.mean(sample_image, axis=(0, 1))
+        #
+        #     # remapt to rgb
+        #     average_color = (average_color[2], average_color[1], average_color[0])
+        #     (color_name, neasest_color) = colormapper.find_closest_color(average_color)
+        #
+        #     #probaly paper grid
+        #     if color_name=="gray":
+        #         continue
+        #
+        #     # normal yolo outline
+        #     draw_corner_lines(output_frame, (x1, y1), (x2, y2), (0, 0, 0), 1, 5)
+        #     draw_corner_lines(output_frame, (sample_x1, sample_y1), (sample_x2, sample_y2), [255, 255, 255], 1, 5)
+        #
+        #
+        #
+        #
+        #
+        #     # color label
+        #     cv2.rectangle(output_frame, (x1, y1), (x1 + 80, y1 - 12), [255, 0, 0], lineType=cv2.LINE_AA, thickness=-1)
+        #     cv2.putText(output_frame, color_name,
+        #                 (x1, y1 - 2), cv2.FONT_HERSHEY_SIMPLEX,
+        #                 0.3, color=[255, 255, 255], thickness=1, lineType=cv2.LINE_AA)
+        #
+        #     if detector.result.boxes.id is not None:
+        #         id = detector.result.boxes.id[id_nr]
+        #         selector.update((center_x, center_y), color_name)
+        #
+        #     id_nr = id_nr + 1
+        #
+        # cv2.circle(output_frame, selector.search_point, 5, (255, 255, 255), 1, cv2.LINE_AA)
+        #
+        # if (selector.current_point is not None):
+        #     draw_target_cross(output_frame, selector.current_point, (50, 50, 255), 1, 1000)
+
+        # cv2.putText(output_frame, f"robot={robot_x, robot_y}",
+        #             (screen_center_x,screen_center_y+100), cv2.FONT_HERSHEY_SIMPLEX,
+        #             0.3, color=[255, 255, 255], thickness=1, lineType=cv2.LINE_AA)
+        #
+        #
+        # cv2.putText(output_frame, f"cam={center} (robot degrees={robot_angle:.1f})",
+        #             (screen_center_x+10, screen_center_y), cv2.FONT_HERSHEY_SIMPLEX,
+        #             0.3, color=[255, 255, 255], thickness=1, lineType=cv2.LINE_AA)
