@@ -1,4 +1,5 @@
 import asyncio
+import sys
 from asyncio import Event
 
 import cv2
@@ -9,7 +10,7 @@ result_frame=None
 result_ready=Event()
 
 
-frame_delay=0.1
+frame_delay=0
 
 
 async def task():
@@ -37,7 +38,18 @@ async def task():
 
     # Loop through the video frames
     # cap = cv2.VideoCapture(0)
-    cap = cv2.VideoCapture(4)
+    cap=None
+    for cam_nr in range(4,-1,-1):
+            print(f"Trying cam {cam_nr}")
+            cap = cv2.VideoCapture(cam_nr)
+            if cap.isOpened():
+                break
+
+    if not cap.isOpened():
+        print("NO CAMS FOUND")
+        sys.exit(1)
+
+
     try:
         while True:
             # Read a frame from the video
