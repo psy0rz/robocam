@@ -1,6 +1,7 @@
 #pixel center of cam
 cam_center_x_pixels = 320
 cam_center_y_pixels = 240
+cam_lag_s=1
 
 #robot middle in real word, and when it touches the ground
 robot_middle_x = (190 + 380) / 2
