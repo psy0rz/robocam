@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 
 import calulate
+import config
 import detector
 from calulate import cam_angle
 # from calulate import cam_angle, cam_position
@@ -37,7 +38,7 @@ async def task():
     # robot.move_to_nowait(x=190,y=0,z=0)
     # robot.move_to_nowait(x=380,y=0,z=0)
     robot_middle = ((190 + 380) / 2, 0)
-    robot.move_to_nowait(x=robot_middle[0], y=robot_middle[1], z=-50, r=90)
+    robot.move_to_nowait(x=robot_middle[0]-20, y=robot_middle[1]+20, z=0, r=90)
 
 
     # robot.move_to_nowait(x=200                    ,y=-200,z=0,r=90)
@@ -71,7 +72,7 @@ async def task():
 
         #camera offset from suction cup (xy) and floor (z)
         # z offset is measured from the floor when robot-z is zero
-        camera_offset_mm = [53, 2,118]
+        camera_offset_mm = [config.cam_offset_x, config.cam_offset_y,118]
 
         #camera should now move to exactly where the suction cup just was (if not, adjust offsets)
         # robot.move_to_nowait(x=robot_middle[0]-camera_offset_mm[0], y=robot_middle[1]-camera_offset_mm[1], z=-50, r=90)
