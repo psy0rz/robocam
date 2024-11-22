@@ -37,7 +37,7 @@ async def task():
     # robot.move_to_nowait(x=190,y=0,z=0)
     # robot.move_to_nowait(x=380,y=0,z=0)
     robot_middle = ((190 + 380) / 2, 0)
-    robot.move_to_nowait(x=robot_middle[0]+20, y=robot_middle[1]+50, z=0, r=90)
+    robot.move_to_nowait(x=robot_middle[0], y=robot_middle[1], z=-50, r=90)
 
 
     # robot.move_to_nowait(x=200                    ,y=-200,z=0,r=90)
@@ -88,7 +88,22 @@ async def task():
             [0, 0, 1]  # 0, 0, 1
         ])
 
+        def calculate_diameter_pixels(diameter_robot_mm, z, camera_matrix):
+            """
+            Calculate the diameter in pixels from the robot's coordinate frame.
 
+            :param diameter_robot_mm: Diameter of the object in real-world units (e.g., mm or meters).
+            :param z: Depth of the object from the camera along the Z-axis (in the same units as the diameter).
+            :param camera_matrix: Intrinsic camera matrix (3x3 numpy array).
+            :return: Diameter in pixels (float).
+            """
+            # Focal length in pixels (fx from camera matrix)
+            fx = camera_matrix[0, 0]
+
+            # Compute the diameter in pixels
+            diameter_pixels = (diameter_robot_mm * pixels_per_mm_x)
+            print (diameter_pixels)
+            return int(diameter_pixels)
 
         def robot_to_screen_pixels(camera_center_mm, camera_angle_mm, point_mm):
             """
@@ -172,7 +187,11 @@ async def task():
 
         # show suckion cup position
         cv2.circle(output_frame, robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (robot_x_mm, robot_y_mm)), 15,
+                   (0, 255, 255), 1, cv2.LINE_AA)
+
+        cv2.circle(output_frame, (320, 240), calculate_diameter_pixels(20, robot_z_mm, camera_matrix),
                    (0, 255, 255), 2, cv2.LINE_AA)
+
 
         cv2.circle(output_frame, (320, 240), 5, (255, 255, 255), 1, cv2.LINE_AA)
 
