@@ -2,7 +2,9 @@ import asyncio
 
 import cv2
 
+import config
 import detector
+from calulate import get_pix_per_mm_for_z
 from config import robot_middle_x, robot_middle_y, robot_ground_z, cam_approx_offset_x, cam_approx_offset_y, cam_lag_s, \
     calibration_square
 # from calulate import cam_angle, cam_position
@@ -58,8 +60,8 @@ async def task():
     robot.move_to(calibrate_x, calibrate_y, low_z, r=90)
     await asyncio.sleep(1)
     w, h = await get_w_h()
-    low_x_pix_per_mm = w / calibration_square
-    print(f"low_x_pix_per_mm = {low_x_pix_per_mm:0.2f} pixels/mm")
+    config.low_x_pix_per_mm = w / calibration_square
+    print(f"low_x_pix_per_mm = {config.low_x_pix_per_mm:0.2f} pixels/mm")
 
     # high height calibration
     robot.move_to(calibrate_x, calibrate_y, high_z, r=90)
@@ -69,26 +71,23 @@ async def task():
     print(f"high_x_pix_per_mm = {high_x_pix_per_mm:0.2f} pixels/mm")
 
     # determine actual cam height from delta z and known pixels per mm
-    low_cam_height=(delta_z*high_x_pix_per_mm)/(low_x_pix_per_mm-high_x_pix_per_mm)
-    print(f"low_cam_height = {low_cam_height:0.2f} mm")
+    config.low_cam_height=(delta_z*high_x_pix_per_mm)/(config.low_x_pix_per_mm-high_x_pix_per_mm)
+    print(f"low_cam_height = {config.low_cam_height:0.2f} mm")
 
 
     # cam_z_offset can be used to get actual camera height from z
-    cam_offset_z=low_cam_height-low_z
-    print(f"cam_z_offset = {cam_offset_z} mm")
+    config.cam_offset_z=config.low_cam_height-low_z
+    print(f"cam_z_offset = {config.cam_offset_z} mm")
 
 
     print("CALIBRATED SETTINGS:")
-    print(f"cam_offset_z={cam_offset_z}")
-    print(f"low_cam_height={low_cam_height}")
-    print(f"low_x_pix_per_mm={low_x_pix_per_mm}")
+    print(f"cam_offset_z={config.cam_offset_z}")
+    print(f"low_cam_height={config.low_cam_height}")
+    print(f"low_x_pix_per_mm={config.low_x_pix_per_mm}")
 
     ### test
     print("TESTING")
 
-    def get_pix_per_mm_for_z(z):
-        cam_height=z+cam_offset_z
-        return (low_cam_height/cam_height)*  low_x_pix_per_mm
 
     for z in range(robot_ground_z, 170, 25):
         robot.move_to(calibrate_x, calibrate_y, z, r=90)

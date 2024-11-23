@@ -1,5 +1,7 @@
 import math
 
+from config import cam_offset_z, low_cam_height, low_x_pix_per_mm
+
 
 def distance_between_points(point1, point2):
     # dist=cv2.norm(np.array(point1) - np.array(point2))
@@ -24,6 +26,10 @@ def distance_between_points(point1, point2):
 #     arm_factor = arm_len_cam / arm_len
 #
 #     return int( robot_pos[0] * arm_factor), int(robot_pos[1] * arm_factor)
+
+def get_pix_per_mm_for_z(z):
+    cam_height=z+cam_offset_z
+    return (low_cam_height/cam_height)*  low_x_pix_per_mm
 
 
 #NOTE: just get j1 from dobot itself instead of calculating
