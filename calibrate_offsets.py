@@ -83,9 +83,6 @@ async def task():
                 f"Calibration: div_pixels={div_x_pixels, div_y_pixels} cam_offset=({cam_offset_x:.2f}, {cam_offset_y:.2f})")
 
 
-
-
-
             if div_x_pixels == 0 and div_y_pixels == 0:
                 print(f"CALIBRATION OK: ({cam_offset_x:.2f}, {cam_offset_y:.2f})")
                 #move back to square so user can tune it if needed

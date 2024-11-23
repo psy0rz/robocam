@@ -9,8 +9,11 @@ robot_middle_y = 0
 robot_ground_z = -48
 
 #approximate cam offset (for auto calibrating)
-cam_approx_offset_x = 30
+cam_approx_offset_x = 50
 cam_approx_offset_y = 0
 
-cam_offset_x=51.4
-cam_offset_y=1.97
+# cam_offset_x=51.4
+# cam_offset_y=1.97
+
+cam_offset_x=52.3
+cam_offset_y=1.9
