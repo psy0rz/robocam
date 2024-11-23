@@ -14,6 +14,9 @@ async def main():
         import calibrate_offsets
         await asyncio.create_task(auto_reload_task(calibrate_offsets))
 
+    elif "calibrate-camera" in sys.argv:
+        import calibrate_cam
+        await asyncio.create_task(auto_reload_task(calibrate_cam))
 
     else:
         import robot
