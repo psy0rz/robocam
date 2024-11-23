@@ -74,14 +74,17 @@ async def task():
     print(f"high pix/mm={high_x_pix_per_mm:0.2f} ")
 
 
-    high_z=(calibrate_delta_z*low_x_pix_per_mm)/(low_x_pix_per_mm-high_x_pix_per_mm)
-    low_z=(calibrate_delta_z*high_x_pix_per_mm)/(low_x_pix_per_mm-high_x_pix_per_mm)
-    print(f"low z={low_z:0.2f} mm")
-    print(f"high z={high_z:0.2f} mm")
+    # high_height=(calibrate_delta_z*low_x_pix_per_mm)/(low_x_pix_per_mm-high_x_pix_per_mm)
+    low_cam_height=(calibrate_delta_z*high_x_pix_per_mm)/(low_x_pix_per_mm-high_x_pix_per_mm)
+    print(f"low z={low_cam_height:0.2f} mm")
+    # print(f"high z={high_height:0.2f} mm")
 
-    print(f"robot cam delta {low_z-robot_ground_z}")
+    cam_z_offset=low_cam_height-robot_ground_z
+    print(f"cam_z_offset {cam_z_offset}")
 
-    robot.move_to(calibrate_x, calibrate_y, robot_ground_z , r=90)
+    z=robot_ground_z+20
+    robot.move_to(calibrate_x, calibrate_y, z , r=90)
+    print(f"cam height from robot z {z+cam_z_offset}")
 
     return
     def get_pix_per_mm_for_z(z):
