@@ -15,20 +15,16 @@ cam_center_y_pixels = 240
 async def task():
     cv2.namedWindow("Calibrate camera", flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
     robot = DobotFun()
+    # robot.home()
 
     calibrate_x = robot_middle_x - cam_approx_offset_x
     calibrate_y = robot_middle_y - cam_approx_offset_y
     robot.move_to(calibrate_x, calibrate_y, robot_ground_z, r=90)
 
-    # this much higher from robot_ground_z
-    calibrate_delta_z = 100
+    low_z=robot_ground_z
+    delta_z = 100
+    high_z=low_z+delta_z
 
-
-    calibrate_z_offset = robot_ground_z
-    calibrate_z_factor = 0
-    # pixels per mm at ground level
-    low_x_pix_per_mm = 0
-    calibrate_y_pix_per_mm = 0
 
     async def get_w_h():
         while True:
@@ -57,47 +53,36 @@ async def task():
                 cv2.imshow("Calibrate camera", output_frame)
                 cv2.waitKey(1)
 
-    # get ground pix per mm
-
-    # get ground floor calibration
-    robot.move_to(calibrate_x, calibrate_y, robot_ground_z, r=90)
+    # low height calibration
+    robot.move_to(calibrate_x, calibrate_y, low_z, r=90)
     await asyncio.sleep(1)
     w, h = await get_w_h()
     low_x_pix_per_mm = w / calibration_square
-    print(f"x={low_x_pix_per_mm:0.2f} pixels/mm")
+    print(f"low_x_pix_per_mm = {low_x_pix_per_mm:0.2f} pixels/mm")
 
-    # determine calibrate_z_factor by moving camera higher
-    robot.move_to(calibrate_x, calibrate_y, robot_ground_z + calibrate_delta_z, r=90)
+    # high height calibration
+    robot.move_to(calibrate_x, calibrate_y, high_z, r=90)
     await asyncio.sleep(1)
     w, h = await get_w_h()
     high_x_pix_per_mm = w / calibration_square
-    print(f"high pix/mm={high_x_pix_per_mm:0.2f} ")
+    print(f"high_x_pix_per_mm = {high_x_pix_per_mm:0.2f} pixels/mm")
+
+    # determine actual cam height from delta z and known pixels per mm
+    low_cam_height=(delta_z*high_x_pix_per_mm)/(low_x_pix_per_mm-high_x_pix_per_mm)
+    print(f"low_cam_height = {low_cam_height:0.2f} mm")
+
+    # cam_z_offset can be used to get actual camera height from z
+    cam_z_offset=low_cam_height-low_z
+    print(f"cam_z_offset = {cam_z_offset} mm")
 
 
-    # high_height=(calibrate_delta_z*low_x_pix_per_mm)/(low_x_pix_per_mm-high_x_pix_per_mm)
-    low_cam_height=(calibrate_delta_z*high_x_pix_per_mm)/(low_x_pix_per_mm-high_x_pix_per_mm)
-    print(f"low z={low_cam_height:0.2f} mm")
-    # print(f"high z={high_height:0.2f} mm")
-
-    cam_z_offset=low_cam_height-robot_ground_z
-    print(f"cam_z_offset {cam_z_offset}")
-
-    z=robot_ground_z+20
-    robot.move_to(calibrate_x, calibrate_y, z , r=90)
-    print(f"cam height from robot z {z+cam_z_offset}")
-
-    return
     def get_pix_per_mm_for_z(z):
-        delta_z=z-calibrate_z_offset
-
-        z_percentage=delta_z/calibrate_delta_z
-        factor= low_x_pix_per_mm + ( low_x_pix_per_mm - high_x_pix_per_mm)*z_percentage
-
-        return factor
+        cam_height=z+cam_z_offset
+        return (low_cam_height/cam_height)*  low_x_pix_per_mm
 
     # test
     print("TESTING")
-    for z in range(robot_ground_z, robot_ground_z+110, 10):
+    for z in range(robot_ground_z, 170, 25):
         robot.move_to(calibrate_x, calibrate_y, z, r=90)
         await asyncio.sleep(1)
         w, h = await get_w_h()
