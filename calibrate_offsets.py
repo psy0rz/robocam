@@ -37,8 +37,8 @@ async def task():
         boxes = detector.result.boxes.xyxy
         if len(boxes) != 1:
             pass
-            print(f"Error, incorrect number of boxes detected"
-                  f": {len(boxes)}")
+            # print(f"Error, incorrect number of boxes detected"
+            #       f": {len(boxes)}")
         else:
 
             (x1, y1, x2, y2) = boxes[0]
@@ -85,7 +85,10 @@ async def task():
 
 
             if div_x_pixels == 0 and div_y_pixels == 0:
-                print(f"CALIBRATION OK: ({cam_offset_x:.2f}, {cam_offset_y:.2f})")
+                print(f"CALIBRATED SETTINGS:")
+                print(f"cam_offset_x={cam_offset_x}")
+                print(f"cam_offset_y={cam_offset_y}")
+
                 #move back to square so user can tune it if needed
                 robot.move_to(robot_middle_x, robot_middle_y, robot_ground_z, r=90)
                 await asyncio.sleep(1)
@@ -93,3 +96,6 @@ async def task():
                 await asyncio.sleep(cam_lag_s)
 
         cv2.imshow("Calibrate offsets", output_frame)
+
+
+

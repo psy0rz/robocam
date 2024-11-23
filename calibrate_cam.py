@@ -52,6 +52,7 @@ async def task():
                 print("Waiting for 1 square...")
                 cv2.imshow("Calibrate camera", output_frame)
                 cv2.waitKey(1)
+                await  asyncio.sleep(1)
 
     # low height calibration
     robot.move_to(calibrate_x, calibrate_y, low_z, r=90)
@@ -71,17 +72,24 @@ async def task():
     low_cam_height=(delta_z*high_x_pix_per_mm)/(low_x_pix_per_mm-high_x_pix_per_mm)
     print(f"low_cam_height = {low_cam_height:0.2f} mm")
 
-    # cam_z_offset can be used to get actual camera height from z
-    cam_z_offset=low_cam_height-low_z
-    print(f"cam_z_offset = {cam_z_offset} mm")
 
+    # cam_z_offset can be used to get actual camera height from z
+    cam_offset_z=low_cam_height-low_z
+    print(f"cam_z_offset = {cam_offset_z} mm")
+
+
+    print("CALIBRATED SETTINGS:")
+    print(f"cam_offset_z={cam_offset_z}")
+    print(f"low_cam_height={low_cam_height}")
+    print(f"low_x_pix_per_mm={low_x_pix_per_mm}")
+
+    ### test
+    print("TESTING")
 
     def get_pix_per_mm_for_z(z):
-        cam_height=z+cam_z_offset
+        cam_height=z+cam_offset_z
         return (low_cam_height/cam_height)*  low_x_pix_per_mm
 
-    # test
-    print("TESTING")
     for z in range(robot_ground_z, 170, 25):
         robot.move_to(calibrate_x, calibrate_y, z, r=90)
         await asyncio.sleep(1)
@@ -90,3 +98,5 @@ async def task():
 
         w_mm = w / pix_per_mm
         print(f"z={z}, width={w_mm:.2f} mm")
+
+
