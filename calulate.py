@@ -1,6 +1,6 @@
 import math
 
-from config import cam_offset_z, low_cam_height, low_x_pix_per_mm
+import config
 
 
 def distance_between_points(point1, point2):
@@ -28,11 +28,11 @@ def distance_between_points(point1, point2):
 #     return int( robot_pos[0] * arm_factor), int(robot_pos[1] * arm_factor)
 
 def get_pix_per_mm_for_z(z):
-    cam_height=z+cam_offset_z
-    return (low_cam_height/cam_height)*  low_x_pix_per_mm
+    cam_height = z + config.cam_offset_z
+    return (config.low_cam_height / cam_height) * config.low_x_pix_per_mm
 
 
-#NOTE: just get j1 from dobot itself instead of calculating
+# NOTE: just get j1 from dobot itself instead of calculating
 # calculate the camera rotation angle from the robot arm position
 def cam_angle(robot_pos):
     a = math.atan(robot_pos[1] / robot_pos[0])

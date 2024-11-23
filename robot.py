@@ -7,7 +7,7 @@ import numpy as np
 import calulate
 import config
 import detector
-from calulate import cam_angle
+from calulate import cam_angle, get_pix_per_mm_for_z
 # from calulate import cam_angle, cam_position
 from dobot.dobotfun.dobotfun import DobotFun
 from selector import Selector
@@ -20,7 +20,6 @@ import colormapper
 selector = Selector()
 
 mouse_clicked = [100, 100]
-
 
 
 def click_event(event, x, y, flags, param):
@@ -38,8 +37,7 @@ async def task():
     # robot.move_to_nowait(x=190,y=0,z=0)
     # robot.move_to_nowait(x=380,y=0,z=0)
     robot_middle = ((190 + 380) / 2, 0)
-    robot.move_to_nowait(x=robot_middle[0]-20, y=robot_middle[1]+20, z=0, r=90)
-
+    robot.move_to(x=robot_middle[0] , y=robot_middle[1]+50 , z=30, r=90)
 
     # robot.move_to_nowait(x=200                    ,y=-200,z=0,r=90)
 
@@ -65,46 +63,22 @@ async def task():
         robot_y_mm = (robot_pose.position.y)
         robot_z_mm = (robot_pose.position.z)
 
-        robot_position_mm=(robot_x_mm, robot_y_mm, robot_z_mm)
+        robot_position_mm = (robot_x_mm, robot_y_mm, robot_z_mm)
 
         robot_angle_degrees = robot_pose.joints.j1
-        # print(f"{robot_x_mm}, {robot_y_mm}, {robot_angle_degrees}")
+        # robot_angle_degrees=cam_angle((robot_x_mm, robot_y_mm))
 
-        #camera offset from suction cup (xy) and floor (z)
-        # z offset is measured from the floor when robot-z is zero
-        camera_offset_mm = [config.cam_offset_x, config.cam_offset_y,118]
 
-        #camera should now move to exactly where the suction cup just was (if not, adjust offsets)
-        # robot.move_to_nowait(x=robot_middle[0]-camera_offset_mm[0], y=robot_middle[1]-camera_offset_mm[1], z=-50, r=90)
-
-        # note: some trickyness since x and y are swapped for the robot
-        pixels_per_mm_x = float(8.15)
-        pixels_per_mm_y = pixels_per_mm_x
-        cam_center_x_pixels = 320
-        cam_center_y_pixels = 240
-        camera_matrix_z=camera_offset_mm[2]-50 #base "zoom" level / camera height that corresponds the the camera_matrix below
         camera_matrix = np.array([
-            [pixels_per_mm_x, 0, cam_center_x_pixels],
-            [0, pixels_per_mm_y, cam_center_y_pixels],
+            [None, 0, config.cam_center_x_pixels],  # fill be filled in later
+            [0, None, config.cam_center_y_pixels],
             [0, 0, 1]  # 0, 0, 1
         ])
 
-        def calculate_diameter_pixels(diameter_robot_mm, z, camera_matrix):
-            """
-            Calculate the diameter in pixels from the robot's coordinate frame.
-
-            :param diameter_robot_mm: Diameter of the object in real-world units (e.g., mm or meters).
-            :param z: Depth of the object from the camera along the Z-axis (in the same units as the diameter).
-            :param camera_matrix: Intrinsic camera matrix (3x3 numpy array).
-            :return: Diameter in pixels (float).
-            """
-            # Focal length in pixels (fx from camera matrix)
-            fx = camera_matrix[0, 0]
-
-            # Compute the diameter in pixels
-            diameter_pixels = (diameter_robot_mm * pixels_per_mm_x)
-            print (diameter_pixels)
-            return int(diameter_pixels)
+        def update_camera_matrix(z):
+            pix_per_mm = get_pix_per_mm_for_z(z)
+            camera_matrix[0, 0] = pix_per_mm
+            camera_matrix[1, 1] = pix_per_mm
 
         def robot_to_screen_pixels(camera_center_mm, camera_angle_mm, point_mm):
             """
@@ -126,7 +100,7 @@ async def task():
             ])
 
             # Extract the coordinates
-            cam_center_x, cam_center_y, cam_center_z = camera_center_mm
+            cam_center_x, cam_center_y = camera_center_mm
             point_x, point_y = point_mm
 
             # Adjust point to the camera's frame of reference (relative to camera center)
@@ -139,14 +113,10 @@ async def task():
             # Add homogeneous coordinate (z=1 for 2D projection)
             homogeneous_coords = np.append(rotated_coords, 1)
 
-            #adjust for z height of cam
-            zoomed_camera_matrix=camera_matrix.copy()
-            zoom_factor=camera_matrix_z/ cam_center_z
-            zoomed_camera_matrix[0, 0] *= zoom_factor  # Adjust fx
-            zoomed_camera_matrix[1, 1] *= zoom_factor  # Adjust fy
 
             # Project to screen coordinates using the intrinsic camera matrix
-            screen_coords_homogeneous = np.dot(zoomed_camera_matrix, homogeneous_coords)
+            update_camera_matrix(robot_z_mm)
+            screen_coords_homogeneous = np.dot(camera_matrix, homogeneous_coords)
             x_screen = screen_coords_homogeneous[0] / screen_coords_homogeneous[2]
             y_screen = screen_coords_homogeneous[1] / screen_coords_homogeneous[2]
 
@@ -163,36 +133,35 @@ async def task():
             """
             # Unpack inputs
             x_suction, y_suction, z_suction = robot_position_mm
-            offset_x, offset_y, offset_z = camera_offset_mm
+
 
             # Convert angle to radians
             angle_rad = np.radians(robot_angle_degrees)
 
             # Rotate the offset
-            offset_x_rotated = offset_x * np.cos(angle_rad) - offset_y * np.sin(angle_rad)
-            offset_y_rotated = offset_x * np.sin(angle_rad) + offset_y * np.cos(angle_rad)
+            offset_x_rotated = config.cam_offset_x * np.cos(angle_rad) - config.cam_offset_y * np.sin(angle_rad)
+            offset_y_rotated = config.cam_offset_x * np.sin(angle_rad) + config.cam_offset_y * np.cos(angle_rad)
 
             # Calculate camera position
             x_camera = x_suction + offset_x_rotated
             y_camera = y_suction + offset_y_rotated
-            z_camera = z_suction + offset_z
 
-            return x_camera, y_camera, z_camera
-
+            return x_camera, y_camera
 
         cam_center_mm = calculate_camera_position_mm(robot_position_mm, robot_angle_degrees)
         # print(f"robot={(robot_x_mm, robot_y_mm)} cam={cam_center_mm}")
 
         # fixed test point
-        cv2.circle(output_frame, robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (330,0)), 2, (255, 255,0), 2, cv2.LINE_AA)
+        cv2.circle(output_frame, robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (330, 0)), 2, (255, 255, 0),
+                   2, cv2.LINE_AA)
 
         # show suckion cup position
-        cv2.circle(output_frame, robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (robot_x_mm, robot_y_mm)), 15,
+        cv2.circle(output_frame, robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (robot_x_mm, robot_y_mm)),
+                   15,
                    (0, 255, 255), 1, cv2.LINE_AA)
 
-        cv2.circle(output_frame, (320, 240), calculate_diameter_pixels(20, robot_z_mm, camera_matrix),
+        cv2.circle(output_frame, (320, 240), 20,
                    (0, 255, 255), 2, cv2.LINE_AA)
-
 
         cv2.circle(output_frame, (320, 240), 5, (255, 255, 255), 1, cv2.LINE_AA)
 
@@ -214,7 +183,7 @@ async def task():
             for y in range(start_y, end_y, step):
                 screen_coord_start = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (start_x, y))
                 screen_coord_end = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (end_x - step, y))
-                cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255, 0), 1,cv2.LINE_AA)
+                cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255, 0), 1, cv2.LINE_AA)
 
         draw_grid(cam_center_mm, robot_angle_degrees)
 
