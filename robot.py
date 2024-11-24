@@ -3,6 +3,7 @@ import math
 
 import cv2
 import numpy as np
+from sympy.abc import delta
 
 import calulate
 import config
@@ -30,8 +31,6 @@ def click_event(event, x, y, flags, param):
         mouse_clicked[1] = y
 
 
-
-
 async def task():
     robot = DobotFun()
     # robot.home()
@@ -39,7 +38,7 @@ async def task():
     # robot.move_to_nowait(x=190,y=0,z=0)
     # robot.move_to_nowait(x=380,y=0,z=0)
     robot_middle = ((190 + 380) / 2, 0)
-    robot.move_to(x=robot_middle[0] , y=robot_middle[1] , z=-40, r=90)
+    robot.move_to(x=robot_middle[0], y=robot_middle[1], z=20, r=90)
     # robot.move_to(x=200 , y=100 , z=-40, r=90)
 
     # robot.move_to_nowait(x=200                    ,y=-200,z=0,r=90)
@@ -70,7 +69,6 @@ async def task():
 
         robot_angle_degrees = robot_pose.joints.j1
         # robot_angle_degrees=cam_angle((robot_x_mm, robot_y_mm))
-
 
         camera_matrix = np.array([
             [None, 0, config.cam_center_x_pixels],  # fill be filled in later
@@ -106,7 +104,6 @@ async def task():
             cam_center_x, cam_center_y = camera_center_mm
             point_x, point_y = point_mm
 
-
             # Adjust point to the camera's frame of reference (relative to camera center)
             # x and y axis swapped!
             relative_coords = np.array([-point_y + cam_center_y, -point_x + cam_center_x])
@@ -116,7 +113,6 @@ async def task():
 
             # Add homogeneous coordinate (z=1 for 2D projection)
             homogeneous_coords = np.append(rotated_coords, 1)
-
 
             # Project to screen coordinates using the intrinsic camera matrix
             update_camera_matrix(robot_z_mm)
@@ -138,13 +134,17 @@ async def task():
             # Unpack inputs
             x_suction, y_suction, z_suction = robot_position_mm
 
-
             # Convert angle to radians
             angle_rad = np.radians(robot_angle_degrees)
 
+            # use the static x offsets + the offset-per-mm for camera tilt compensation
+            delta_z = z_suction - config.cam_tilt_base
+            offset_x = config.cam_offset_x - delta_z * config.cam_tilt_x_mm
+            offset_y = config.cam_offset_y - delta_z * config.cam_tilt_y_mm
+
             # Rotate the offset
-            offset_x_rotated = config.cam_offset_x * np.cos(angle_rad) - config.cam_offset_y * np.sin(angle_rad)
-            offset_y_rotated = config.cam_offset_x * np.sin(angle_rad) + config.cam_offset_y * np.cos(angle_rad)
+            offset_x_rotated = offset_x * np.cos(angle_rad) - offset_y * np.sin(angle_rad)
+            offset_y_rotated = offset_x * np.sin(angle_rad) + offset_y * np.cos(angle_rad)
 
             # Calculate camera position
             x_camera = x_suction + offset_x_rotated
