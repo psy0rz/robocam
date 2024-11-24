@@ -3,6 +3,13 @@ import cv2
 
 import detector
 
+
+def message(output_frame, text, color):
+    cv2.putText(output_frame, text,
+                (10, 20), cv2.FONT_HERSHEY_SIMPLEX,
+                0.8, color=color, thickness=2, lineType=cv2.LINE_AA)
+
+
 # wait for exactly one calibration box to be detected
 # return: output_frame, width, height, center_x, center_y
 async def get_box():
@@ -31,10 +38,7 @@ async def get_box():
 
             return output_frame, w, h, center_x, center_y
         else:
-            cv2.putText(output_frame, f"Waiting for exactly one calibration box",
-                        (10,20), cv2.FONT_HERSHEY_SIMPLEX,
-                        0.8, color=[0,0, 255], thickness=2, lineType=cv2.LINE_AA)
-
+            message(output_frame,"Waiting for calibration block", (0,0,200))
 
             cv2.imshow("Calibrate", output_frame)
             cv2.waitKey(1)

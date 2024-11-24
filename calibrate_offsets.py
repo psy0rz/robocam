@@ -20,7 +20,6 @@ async def center_cube(calibrate_x, calibrate_y):
         await asyncio.sleep(cam_lag_s)
         output_frame, w, h, detected_center_x, detected_center_y = await calibrate.get_box()
 
-
         cv2.circle(output_frame, (int(detected_center_x), int(detected_center_y)), 5, (255, 0, 255), 2, cv2.LINE_AA)
         cv2.circle(output_frame, (cam_center_x_pixels, cam_center_y_pixels), 7, (255, 255, 255), 1, cv2.LINE_AA)
 
@@ -44,15 +43,17 @@ async def center_cube(calibrate_x, calibrate_y):
 
         robot.move_to(calibrate_x, calibrate_y, robot_ground_z, r=90)
 
-        cv2.putText(output_frame, f"Calibrating...",
-                    (10, 20), cv2.FONT_HERSHEY_SIMPLEX,
-                    0.8, color=[0, 255, 0], thickness=2, lineType=cv2.LINE_AA)
-
-        cv2.imshow("Calibrate", output_frame)
-        cv2.waitKey(1)
-
         if div_x_pixels < 1 and div_y_pixels < 1:
+            calibrate.message(output_frame, "OK", (0, 255, 0))
+
+            cv2.imshow("Calibrate", output_frame)
+            cv2.waitKey(1)
             return calibrate_x, calibrate_y
+        else:
+            calibrate.message(output_frame, "Calibrating...", (0, 255, 0))
+
+            cv2.imshow("Calibrate", output_frame)
+            cv2.waitKey(1)
 
 
 async def task():
@@ -68,7 +69,12 @@ async def task():
     calibrate_y = robot_middle_y - cam_approx_offset_y
     robot.hop_to(calibrate_x, calibrate_y, robot_ground_z, r=90)
 
-    calibrate_x, calibrate_y=await center_cube(calibrate_x, calibrate_y)
+    calibrate_x, calibrate_y = await center_cube(calibrate_x, calibrate_y)
+
+    cam_offset_x = robot_middle_x - calibrate_x
+    cam_offset_y = robot_middle_y - calibrate_y
+
+    calibrate_x, calibrate_y = await center_cube(calibrate_x, calibrate_y)
 
     cam_offset_x = robot_middle_x - calibrate_x
     cam_offset_y = robot_middle_y - calibrate_y
