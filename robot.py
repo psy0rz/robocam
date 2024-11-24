@@ -30,6 +30,8 @@ def click_event(event, x, y, flags, param):
         mouse_clicked[1] = y
 
 
+
+
 async def task():
     robot = DobotFun()
     # robot.home()

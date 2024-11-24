@@ -32,8 +32,8 @@ async def get_box():
             return output_frame, w, h, center_x, center_y
         else:
             cv2.putText(output_frame, f"Waiting for exactly one calibration box",
-                        (10,10), cv2.FONT_HERSHEY_SIMPLEX,
-                        0.3, color=[0,0, 255], thickness=1, lineType=cv2.LINE_AA)
+                        (10,20), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.8, color=[0,0, 255], thickness=2, lineType=cv2.LINE_AA)
 
 
             cv2.imshow("Calibrate", output_frame)
