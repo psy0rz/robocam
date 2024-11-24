@@ -37,7 +37,8 @@ async def task():
     # robot.move_to_nowait(x=190,y=0,z=0)
     # robot.move_to_nowait(x=380,y=0,z=0)
     robot_middle = ((190 + 380) / 2, 0)
-    robot.move_to(x=robot_middle[0] , y=robot_middle[1]+50 , z=30, r=90)
+    robot.move_to(x=robot_middle[0] , y=robot_middle[1] , z=-40, r=90)
+    # robot.move_to(x=200 , y=100 , z=-40, r=90)
 
     # robot.move_to_nowait(x=200                    ,y=-200,z=0,r=90)
 
@@ -152,16 +153,16 @@ async def task():
         # print(f"robot={(robot_x_mm, robot_y_mm)} cam={cam_center_mm}")
 
         # fixed test point
-        cv2.circle(output_frame, robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (330, 0)), 2, (255, 255, 0),
-                   2, cv2.LINE_AA)
+        # cv2.circle(output_frame, robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (330, 0)), 2, (255, 255, 0),
+        #            2, cv2.LINE_AA)
 
         # show suckion cup position
         cv2.circle(output_frame, robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (robot_x_mm, robot_y_mm)),
                    15,
                    (0, 255, 255), 1, cv2.LINE_AA)
 
-        cv2.circle(output_frame, (320, 240), 20,
-                   (0, 255, 255), 2, cv2.LINE_AA)
+        # cv2.circle(output_frame, (320, 240), 20,
+        #            (0, 255, 255), 2, cv2.LINE_AA)
 
         cv2.circle(output_frame, (320, 240), 5, (255, 255, 255), 1, cv2.LINE_AA)
 
