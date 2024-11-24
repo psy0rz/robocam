@@ -106,6 +106,7 @@ async def task():
             cam_center_x, cam_center_y = camera_center_mm
             point_x, point_y = point_mm
 
+
             # Adjust point to the camera's frame of reference (relative to camera center)
             # x and y axis swapped!
             relative_coords = np.array([-point_y + cam_center_y, -point_x + cam_center_x])

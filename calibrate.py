@@ -38,7 +38,7 @@ async def get_box():
 
             return output_frame, w, h, center_x, center_y
         else:
-            message(output_frame,"Waiting for calibration block", (0,0,200))
+            message(output_frame,"Waiting for calibration block", (0,0,255))
 
             cv2.imshow("Calibrate", output_frame)
             cv2.waitKey(1)
