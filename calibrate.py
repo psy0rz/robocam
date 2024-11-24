@@ -1,7 +1,8 @@
-
 import cv2
 
 import detector
+from config import cam_center_x_pixels, cam_center_y_pixels
+from util import get_closest_box
 
 
 def message(output_frame, text, color):
@@ -18,9 +19,9 @@ async def get_box():
         await detector.result_ready.wait()
         output_frame = detector.result_frame.copy()
 
-        boxes = detector.result.boxes.xyxy
-        if detector.result_frame is not None and len(boxes) == 1:
-            (x1, y1, x2, y2) = boxes[0]
+        closest = get_closest_box(detector.result.boxes, cam_center_x_pixels, cam_center_y_pixels)
+        if closest is not None:
+            (x1, y1, x2, y2) = closest
 
             w = abs(x2 - x1)
             h = abs(y2 - y1)
@@ -34,11 +35,9 @@ async def get_box():
             y2 = int(y2)
             cv2.rectangle(output_frame, (x1, y1), (x2, y2), (0, 255, 0), 1)
 
-
-
             return output_frame, w, h, center_x, center_y
         else:
-            message(output_frame,"Waiting for calibration block", (0,0,255))
+            message(output_frame, "Waiting for calibration block", (0, 0, 255))
 
             cv2.imshow("Calibrate", output_frame)
             cv2.waitKey(1)
