@@ -20,6 +20,7 @@ cam_offset_y=2.5399999999999965
 ### camera calibration
 # size of camera calibration square
 calibration_square=50
+calibration_box_height=23
 
 #result of calibrate-camera:
 cam_offset_z=118.90998077392578
