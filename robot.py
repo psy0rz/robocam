@@ -38,7 +38,7 @@ async def task():
     # robot.move_to_nowait(x=190,y=0,z=0)
     # robot.move_to_nowait(x=380,y=0,z=0)
     robot_middle = ((190 + 380) / 2, 0)
-    robot.move_to(x=robot_middle[0], y=robot_middle[1], z=20, r=90)
+    robot.move_to(x=robot_middle[0], y=robot_middle[1], z=config.robot_ground_z+20, r=90)
     # robot.move_to(x=200 , y=100 , z=-40, r=90)
 
     # robot.move_to_nowait(x=200                    ,y=-200,z=0,r=90)

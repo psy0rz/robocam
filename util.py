@@ -36,7 +36,7 @@ def draw_target_cross(img, center, color, thickness, line_length):
 
 
 # get x1,y1,x2,y2 of the box that is closest to x,y (center coords)
-def get_closest_box(boxes, target_x,target_y):
+def find_closest_box(boxes, target_x, target_y):
 
     closest_box = None
     min_distance = float('inf')

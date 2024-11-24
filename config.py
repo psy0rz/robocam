@@ -1,7 +1,7 @@
 # robot middle in real word, and when it touches the ground
 robot_middle_x = (190 + 380) / 2
 robot_middle_y = 0
-robot_ground_z = -48
+robot_ground_z = -50
 
 # pixel center of cam
 cam_center_x_pixels = 320
@@ -18,11 +18,17 @@ cam_tilt_base = -48
 
 ### camera calibration
 # size of camera calibration square
-calibration_square=50
-calibration_box_height=23
+#calibration_square=50
+# calibration_box_square=25
+calibration_box_height=25
 
 #result of calibrate-camera:
-cam_offset_z=118.90998077392578
-low_cam_height=70.90998077392578
-low_x_pix_per_mm=7.9345383644104
+#oud
+# cam_offset_z=118.90998077392578
+# low_cam_height=70.90998077392578
+# low_x_pix_per_mm=7.9345383644104
 
+#nieuw
+cam_offset_z=122.1250991821289
+low_cam_height=92.1250991821289
+low_x_pix_per_mm=8.314742088317871
