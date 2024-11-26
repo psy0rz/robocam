@@ -8,11 +8,9 @@ from sympy.abc import delta
 import calulate
 import config
 import detector
-from calulate import cam_angle, get_pix_per_mm_for_z
-# from calulate import cam_angle, cam_position
 from dobot.dobotfun.dobotfun import DobotFun
 from selector import Selector
-from util import draw_corner_lines, draw_target_cross
+from util import draw_corner_lines, draw_target_cross, draw_grid
 import colormapper
 
 # Callback function for mouse click event
@@ -70,89 +68,8 @@ async def task():
         robot_angle_degrees = robot_pose.joints.j1
         # robot_angle_degrees=cam_angle((robot_x_mm, robot_y_mm))
 
-        camera_matrix = np.array([
-            [None, 0, config.cam_center_x_pixels],  # fill be filled in later
-            [0, None, config.cam_center_y_pixels],
-            [0, 0, 1]  # 0, 0, 1
-        ])
 
-        def update_camera_matrix(z):
-            pix_per_mm = get_pix_per_mm_for_z(z)
-            camera_matrix[0, 0] = pix_per_mm
-            camera_matrix[1, 1] = pix_per_mm
-
-        def robot_to_screen_pixels(camera_center_mm, camera_angle_mm, point_mm):
-            """
-            Convert a real-world point to screen coordinates, accounting for the robot's camera position and orientation.
-
-            :param camera_center_mm: Tuple (robot_x, robot_y, robot_z) representing the camera's center in world units.
-            :param camera_angle_mm: Camera rotation angle (in degrees, counterclockwise).
-            :param point_mm: Tuple (point_x, point_y) representing the real-world point to project.
-            :param camera_matrix: Intrinsic camera matrix (3x3 numpy array).
-            :return: Screen coordinates as a tuple (x_screen, y_screen).
-            """
-            # Convert angle to radians
-            cam_angle_rad = np.radians(camera_angle_mm)
-
-            # Rotation matrix for the camera
-            rotation_matrix = np.array([
-                [np.cos(cam_angle_rad), -np.sin(cam_angle_rad)],
-                [np.sin(cam_angle_rad), np.cos(cam_angle_rad)]
-            ])
-
-            # Extract the coordinates
-            cam_center_x, cam_center_y = camera_center_mm
-            point_x, point_y = point_mm
-
-            # Adjust point to the camera's frame of reference (relative to camera center)
-            # x and y axis swapped!
-            relative_coords = np.array([-point_y + cam_center_y, -point_x + cam_center_x])
-
-            # Rotate the adjusted coordinates into the camera's orientation
-            rotated_coords = np.dot(rotation_matrix, relative_coords)
-
-            # Add homogeneous coordinate (z=1 for 2D projection)
-            homogeneous_coords = np.append(rotated_coords, 1)
-
-            # Project to screen coordinates using the intrinsic camera matrix
-            update_camera_matrix(robot_z_mm)
-            screen_coords_homogeneous = np.dot(camera_matrix, homogeneous_coords)
-            x_screen = screen_coords_homogeneous[0] / screen_coords_homogeneous[2]
-            y_screen = screen_coords_homogeneous[1] / screen_coords_homogeneous[2]
-
-            return int(x_screen), int(y_screen)
-
-        def calculate_camera_position_mm(robot_position_mm, robot_angle_degrees):
-            """
-            Calculate the camera's position based on the suction cup's position, offset, and orientation.
-
-            :param robot_position_mm: Tuple (x_suction, y_suction) representing the suction cup's global position.
-            :param camera_offset: Tuple (offset_x, offset_y) representing the camera's offset relative to the suction cup.
-            :param robot_angle_degrees: Robot's orientation angle in degrees.
-            :return: Tuple (x_camera, y_camera) representing the camera's global position. z is cam measured from floor
-            """
-            # Unpack inputs
-            x_suction, y_suction, z_suction = robot_position_mm
-
-            # Convert angle to radians
-            angle_rad = np.radians(robot_angle_degrees)
-
-            # use the static x offsets + the offset-per-mm for camera tilt compensation
-            delta_z = z_suction - config.cam_tilt_base
-            offset_x = config.cam_offset_x - delta_z * config.cam_tilt_x_mm
-            offset_y = config.cam_offset_y - delta_z * config.cam_tilt_y_mm
-
-            # Rotate the offset
-            offset_x_rotated = offset_x * np.cos(angle_rad) - offset_y * np.sin(angle_rad)
-            offset_y_rotated = offset_x * np.sin(angle_rad) + offset_y * np.cos(angle_rad)
-
-            # Calculate camera position
-            x_camera = x_suction + offset_x_rotated
-            y_camera = y_suction + offset_y_rotated
-
-            return x_camera, y_camera
-
-        cam_center_mm = calculate_camera_position_mm(robot_position_mm, robot_angle_degrees)
+        cam_center_mm = calulate.calculate_camera_position_mm(robot_position_mm, robot_angle_degrees)
         # print(f"robot={(robot_x_mm, robot_y_mm)} cam={cam_center_mm}")
 
         # fixed test point
@@ -160,7 +77,7 @@ async def task():
         #            2, cv2.LINE_AA)
 
         # show suckion cup position
-        cv2.circle(output_frame, robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (robot_x_mm, robot_y_mm)),
+        cv2.circle(output_frame, calulate.robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (robot_x_mm, robot_y_mm)),
                    15,
                    (0, 255, 255), 1, cv2.LINE_AA)
 
@@ -169,27 +86,9 @@ async def task():
 
         cv2.circle(output_frame, (320, 240), 5, (255, 255, 255), 1, cv2.LINE_AA)
 
-        def draw_grid(cam_center_mm, cam_angle_degrees):
 
-            step = 10
 
-            start_x = int(round(cam_center_mm[0], -1) - 50)
-            end_x = int(round(cam_center_mm[0], -1) + 50)
-
-            start_y = int(round(cam_center_mm[1], -1) - 50)
-            end_y = int(round(cam_center_mm[1], -1) + 50)
-
-            for x in range(start_x, end_x, step):
-                screen_coord_start = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (x, start_y))
-                screen_coord_end = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (x, end_y - step))
-                cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255, 0), 1, cv2.LINE_AA)
-
-            for y in range(start_y, end_y, step):
-                screen_coord_start = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (start_x, y))
-                screen_coord_end = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (end_x - step, y))
-                cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255, 0), 1, cv2.LINE_AA)
-
-        draw_grid(cam_center_mm, robot_angle_degrees)
+        draw_grid(output_frame,cam_center_mm, robot_angle_degrees)
 
         # simulated robot arm (top left click line thingy)
         # cv2.line(output_frame, (0, 0), (robot_x, robot_y), (255, 255, 255), 4)

@@ -2,6 +2,8 @@ import cv2
 import math
 import numpy as np
 
+from calulate import robot_to_screen_pixels
+
 
 def draw_corner_lines(img, pt1, pt2, color, thickness, line_length):
     x1, y1 = pt1
@@ -33,6 +35,25 @@ def draw_target_cross(img, center, color, thickness, line_length):
     # Draw vertical line
     cv2.line(img, (center[0], center[1] - line_length), (center[0], center[1] + line_length), color, thickness)
 
+
+def draw_grid(output_frame,cam_center_mm, cam_angle_degrees):
+    step = 10
+
+    start_x = int(round(cam_center_mm[0], -1) - 50)
+    end_x = int(round(cam_center_mm[0], -1) + 50)
+
+    start_y = int(round(cam_center_mm[1], -1) - 50)
+    end_y = int(round(cam_center_mm[1], -1) + 50)
+
+    for x in range(start_x, end_x, step):
+        screen_coord_start = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (x, start_y))
+        screen_coord_end = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (x, end_y - step))
+        cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255, 0), 1, cv2.LINE_AA)
+
+    for y in range(start_y, end_y, step):
+        screen_coord_start = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (start_x, y))
+        screen_coord_end = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (end_x - step, y))
+        cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255, 0), 1, cv2.LINE_AA)
 
 
 # get x1,y1,x2,y2 of the box that is closest to x,y (center coords)
