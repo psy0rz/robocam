@@ -19,15 +19,16 @@ robot = DobotFun()
 
 async def task():
     detector.confidence = 0.90
-    await place_cube()
+    await place_cube(robot)
 
-    # start at approx location so that we can see the cube
+    # start at known approximate location so that we can see the cube
     calibrate_x = robot_middle_x - config.cam_offset_x
     calibrate_y = robot_middle_y - config.cam_offset_y
     robot.move_to(calibrate_x, calibrate_y, robot_ground_z + 50, r=90)
     robot.move_to(calibrate_x, calibrate_y, robot_ground_z, r=90)
 
-    calibrate_x, calibrate_y = await center_cube(calibrate_x, calibrate_y, robot_ground_z)
+    await asyncio.sleep(1)
+    calibrate_x, calibrate_y = await calibrate.center_cube(robot,calibrate_x, calibrate_y, robot_ground_z)
 
     cam_offset_x = robot_middle_x - calibrate_x
     cam_offset_y = robot_middle_y - calibrate_y
@@ -40,7 +41,8 @@ async def task():
 
     robot.move_to(calibrate_high_x, calibrate_high_y, robot_ground_z + delta_z,
                   r=90)
-    calibrate_high_x, calibrate_high_y = await center_cube(calibrate_high_x, calibrate_high_y, robot_ground_z + delta_z)
+    await asyncio.sleep(1)
+    calibrate_high_x, calibrate_high_y = await calibrate.center_cube(robot,calibrate_high_x, calibrate_high_y, robot_ground_z + delta_z)
 
     #tilt is in mm per z-increase
     cam_tilt_x_mm = float((calibrate_high_x - calibrate_x) / delta_z)
@@ -53,4 +55,4 @@ async def task():
     print(f"cam_offset_y={cam_offset_y}")
     print(f"cam_tilt_x_mm={cam_tilt_x_mm}")
     print(f"cam_tilt_y_mm={cam_tilt_y_mm}")
-    print(f"cam_tilt_base={robot_ground_z}")
+    print(f"cam_tilt_base={robot_ground_z+config.calibration_box_height}") #dont forget to take box height into account!
