@@ -24,11 +24,11 @@ calibration_box_height=25
 
 #result of calibrate-camera:
 #oud
-# cam_offset_z=118.90998077392578
-# low_cam_height=70.90998077392578
-# low_x_pix_per_mm=7.9345383644104
+cam_offset_z=118.90998077392578
+low_cam_height=70.90998077392578
+low_x_pix_per_mm=7.9345383644104
 
 #nieuw
-cam_offset_z=122.1250991821289
-low_cam_height=92.1250991821289
-low_x_pix_per_mm=8.314742088317871
+cam_offset_z=123.09851837158203
+low_cam_height=68.09851837158203
+low_x_pix_per_mm=8.325435638427734
