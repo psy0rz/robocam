@@ -4,8 +4,8 @@ import cv2
 
 import config
 import detector
+from calculate import get_pix_per_mm_for_camera_height
 from calibrate import place_cube, center_cube, get_cube
-from calulate import get_pix_per_mm_for_z
 from config import robot_middle_x, robot_middle_y, robot_ground_z, cam_lag_s, cam_center_x_pixels, \
     calibration_box_height
 from dobot.dobotfun.dobotfun import DobotFun
@@ -87,7 +87,7 @@ async def task():
         robot.move_to(calibrate_x, calibrate_y, z, r=90)
         await asyncio.sleep(1)
         output_frame, width, height, center_x_pixels, center_y_pixels_top = await get_cube()
-        pix_per_mm = get_pix_per_mm_for_z(z-calibration_box_height)
+        pix_per_mm = get_pix_per_mm_for_camera_height(z-calibration_box_height)
 
 
         w_mm = height / pix_per_mm
@@ -95,46 +95,5 @@ async def task():
 
 
 
-    return
 
 
-
-
-    # low height calibration
-    robot.move_to(calibrate_x, calibrate_y, low_z, r=90)
-    await asyncio.sleep(1)
-    w, h = await get_w_h()
-    config.low_x_pix_per_mm = w / calibration_square
-    print(f"low_x_pix_per_mm = {config.low_x_pix_per_mm:0.2f} pixels/mm")
-
-    # high height calibration
-    robot.move_to(calibrate_x, calibrate_y, high_z, r=90)
-    await asyncio.sleep(1)
-    w, h = await get_w_h()
-    high_x_pix_per_mm = w / calibration_square
-    print(f"high_x_pix_per_mm = {high_x_pix_per_mm:0.2f} pixels/mm")
-
-    # determine actual cam height from delta z and known pixels per mm
-    config.low_cam_height = (delta_z * high_x_pix_per_mm) / (config.low_x_pix_per_mm - high_x_pix_per_mm)
-    print(f"low_cam_height = {config.low_cam_height:0.2f} mm")
-
-    # cam_z_offset can be used to get actual camera height from z
-    config.cam_offset_z = config.low_cam_height - low_z
-    print(f"cam_z_offset = {config.cam_offset_z} mm")
-
-    print("CALIBRATED SETTINGS:")
-    print(f"cam_offset_z={config.cam_offset_z}")
-    print(f"low_cam_height={config.low_cam_height}")
-    print(f"low_x_pix_per_mm={config.low_x_pix_per_mm}")
-
-    ### test
-    print("TESTING")
-
-    for z in range(robot_ground_z, 170, 25):
-        robot.move_to(calibrate_x, calibrate_y, z, r=90)
-        await asyncio.sleep(1)
-        w, h = await get_w_h()
-        pix_per_mm = get_pix_per_mm_for_z(z)
-
-        w_mm = w / pix_per_mm
-        print(f"z={z}, width={w_mm:.2f} mm")

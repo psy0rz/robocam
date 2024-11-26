@@ -1,4 +1,4 @@
-from calulate import distance_between_points
+from calculate import distance_between_points
 
 
 class Selector:

@@ -1,17 +1,15 @@
 import importlib
-import math
 
 import cv2
 import numpy as np
-from sympy.abc import delta
 
-import calulate
-import config
+
+import calculate
 import detector
 from dobot.dobotfun.dobotfun import DobotFun
 from selector import Selector
-from util import draw_corner_lines, draw_target_cross, draw_grid
-import colormapper
+from util import draw_grid
+import config
 
 # Callback function for mouse click event
 
@@ -45,9 +43,48 @@ async def task():
 
     # selector.search_color = "orange"
 
+    def screen_to_robot_mm(camera_center_mm, camera_angle_mm, point_pixels):
+
+        # Convert angle to radians
+        cam_angle_rad = np.radians(camera_angle_mm)
+
+        # Rotation matrix for the camera
+        reverse_rotation_matrix = np.array([
+            [np.cos(cam_angle_rad), np.sin(cam_angle_rad)],
+            [-np.sin(cam_angle_rad), np.cos(cam_angle_rad)]
+        ])
+
+        # Extract the coordinates
+        cam_center_x_mm, cam_center_y_mm, cam_center_z_mm = camera_center_mm
+        point_x_pixels, point_y_pixels = point_pixels
+
+        # Convert screen coordinates to homogeneous form
+        screen_coords_homogeneous = np.array([point_x_pixels, point_y_pixels, 1])
+
+        # Reverse the projection (intrinsic matrix inverse)
+        calculate.update_camera_matrix(cam_center_z_mm)
+        print(calculate.camera_matrix)
+        camera_matrix_inv = np.linalg.inv(calculate.camera_matrix)
+        real_world_homogeneous = np.dot(camera_matrix_inv, screen_coords_homogeneous)
+
+        # Normalize homogeneous coordinates to get real-world coordinates in the camera frame
+        real_world_coords_camera_frame = real_world_homogeneous[:2] / real_world_homogeneous[2]
+
+        # Reverse the camera's rotation
+        rotated_coords = np.dot(reverse_rotation_matrix, real_world_coords_camera_frame)
+
+        # Convert back to the global frame (add the camera center, swapping axes back)
+        point_y_mm = -rotated_coords[0] + cam_center_y_mm
+        point_x_mm = -rotated_coords[1] + cam_center_x_mm
+
+        return point_x_mm, point_y_mm
+
+
+
+
     while True:
         await  detector.result_ready.wait()
-        importlib.reload(calulate)
+        importlib.reload(calculate)
 
         if detector.result_frame is None:
             continue
@@ -69,15 +106,17 @@ async def task():
         # robot_angle_degrees=cam_angle((robot_x_mm, robot_y_mm))
 
 
-        cam_center_mm = calulate.calculate_camera_position_mm(robot_position_mm, robot_angle_degrees)
+        cam_center_mm = calculate.calculate_camera_position_mm(robot_position_mm, robot_angle_degrees)
         # print(f"robot={(robot_x_mm, robot_y_mm)} cam={cam_center_mm}")
 
         # fixed test point
-        # cv2.circle(output_frame, robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (330, 0)), 2, (255, 255, 0),
+        #
+        # cv2.circle(output_frame, calulate.robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (330, 0)), 2, (255, 255, 0),
         #            2, cv2.LINE_AA)
 
         # show suckion cup position
-        cv2.circle(output_frame, calulate.robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (robot_x_mm, robot_y_mm)),
+        suction_xy=calculate.robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (robot_x_mm, robot_y_mm))
+        cv2.circle(output_frame, suction_xy,
                    15,
                    (0, 255, 255), 1, cv2.LINE_AA)
 
@@ -86,6 +125,10 @@ async def task():
 
         cv2.circle(output_frame, (320, 240), 5, (255, 255, 255), 1, cv2.LINE_AA)
 
+
+        print (f"Input: {robot_x_mm, robot_y_mm}, xy={suction_xy}")
+        reverse=screen_to_robot_mm(cam_center_mm, robot_angle_degrees, suction_xy)
+        print (f"reverse: {reverse}")
 
 
         draw_grid(output_frame,cam_center_mm, robot_angle_degrees)

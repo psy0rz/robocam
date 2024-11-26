@@ -110,7 +110,7 @@ def robot_to_screen_pixels(camera_center_mm, camera_angle_mm, point_mm):
 
     # Adjust point to the camera's frame of reference (relative to camera center)
     # x and y axis swapped!
-    relative_coords = np.array([-point_y + cam_center_y, -point_x + cam_center_x])
+    relative_coords = np.array([ cam_center_y-point_y,  cam_center_x-point_x])
 
     # Rotate the adjusted coordinates into the camera's orientation
     rotated_coords = np.dot(rotation_matrix, relative_coords)
