@@ -10,24 +10,6 @@ def distance_between_points(point1, point2):
 
     return dist
 
-
-# CAM_OFFSET_X = 50
-# CAM_OFFSET_Y= 4
-
-
-# calculate the camera position from the robot arm position (real world coords)
-# def cam_position(robot_pos, invert=False):
-#     arm_len = math.sqrt(robot_pos[0] ** 2 + robot_pos[1] ** 2)
-#
-#     if invert:
-#         arm_len_cam = arm_len + CAM_OFFSET
-#     else:
-#         arm_len_cam = arm_len - CAM_OFFSET
-#
-#     arm_factor = arm_len_cam / arm_len
-#
-#     return int( robot_pos[0] * arm_factor), int(robot_pos[1] * arm_factor)
-
 def get_pix_per_mm_for_camera_height(camera_height):
 
     return (config.low_cam_height / camera_height) * config.low_x_pix_per_mm
@@ -76,13 +58,13 @@ camera_matrix = np.array([
     [None, 0, config.cam_center_x_pixels],  # fill be filled in later
     [0, None, config.cam_center_y_pixels],
     [0, 0, 1]  # 0, 0, 1
-])
+], dtype=np.float64)
 
 
 def update_camera_matrix(camera_height):
     pix_per_mm = get_pix_per_mm_for_camera_height(camera_height)
-    camera_matrix[0, 0] = pix_per_mm
-    camera_matrix[1, 1] = pix_per_mm
+    camera_matrix[0, 0] = np.float64(pix_per_mm)
+    camera_matrix[1, 1] = np.float64(pix_per_mm)
 
 
 def robot_to_screen_pixels(camera_center_mm, camera_angle_mm, point_mm):
@@ -124,4 +106,42 @@ def robot_to_screen_pixels(camera_center_mm, camera_angle_mm, point_mm):
     x_screen = screen_coords_homogeneous[0] / screen_coords_homogeneous[2]
     y_screen = screen_coords_homogeneous[1] / screen_coords_homogeneous[2]
 
-    return int(x_screen), int(y_screen)
+    return x_screen, y_screen
+
+
+def screen_to_robot_mm(camera_center_mm, camera_angle_mm, point_pixels):
+
+    # Convert angle to radians
+    cam_angle_rad = np.radians(camera_angle_mm)
+
+    # Rotation matrix for the camera
+    reverse_rotation_matrix = np.array([
+        [np.cos(cam_angle_rad), np.sin(cam_angle_rad)],
+        [-np.sin(cam_angle_rad), np.cos(cam_angle_rad)]
+    ])
+
+    # Extract the coordinates
+    cam_center_x_mm, cam_center_y_mm, cam_center_z_mm = camera_center_mm
+    point_x_pixels, point_y_pixels = point_pixels
+
+    # Convert screen coordinates to homogeneous form
+    screen_coords_homogeneous = np.array([point_x_pixels, point_y_pixels, 1])
+
+    # Reverse the projection (intrinsic matrix inverse)
+    update_camera_matrix(cam_center_z_mm)
+    # print(calculate.camera_matrix)
+    camera_matrix_inv = np.linalg.inv(camera_matrix)
+    real_world_homogeneous = np.dot(camera_matrix_inv, screen_coords_homogeneous)
+
+    # Normalize homogeneous coordinates to get real-world coordinates in the camera frame
+    real_world_coords_camera_frame = real_world_homogeneous[:2] / real_world_homogeneous[2]
+
+    # Reverse the camera's rotation
+    rotated_coords = np.dot(reverse_rotation_matrix, real_world_coords_camera_frame)
+
+    # Convert back to the global frame (add the camera center, swapping axes back)
+    point_y_mm = -rotated_coords[0] + cam_center_y_mm
+    point_x_mm = -rotated_coords[1] + cam_center_x_mm
+
+    return point_x_mm, point_y_mm
+

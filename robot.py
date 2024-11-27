@@ -43,45 +43,6 @@ async def task():
 
     # selector.search_color = "orange"
 
-    def screen_to_robot_mm(camera_center_mm, camera_angle_mm, point_pixels):
-
-        # Convert angle to radians
-        cam_angle_rad = np.radians(camera_angle_mm)
-
-        # Rotation matrix for the camera
-        reverse_rotation_matrix = np.array([
-            [np.cos(cam_angle_rad), np.sin(cam_angle_rad)],
-            [-np.sin(cam_angle_rad), np.cos(cam_angle_rad)]
-        ])
-
-        # Extract the coordinates
-        cam_center_x_mm, cam_center_y_mm, cam_center_z_mm = camera_center_mm
-        point_x_pixels, point_y_pixels = point_pixels
-
-        # Convert screen coordinates to homogeneous form
-        screen_coords_homogeneous = np.array([point_x_pixels, point_y_pixels, 1])
-
-        # Reverse the projection (intrinsic matrix inverse)
-        calculate.update_camera_matrix(cam_center_z_mm)
-        print(calculate.camera_matrix)
-        camera_matrix_inv = np.linalg.inv(calculate.camera_matrix)
-        real_world_homogeneous = np.dot(camera_matrix_inv, screen_coords_homogeneous)
-
-        # Normalize homogeneous coordinates to get real-world coordinates in the camera frame
-        real_world_coords_camera_frame = real_world_homogeneous[:2] / real_world_homogeneous[2]
-
-        # Reverse the camera's rotation
-        rotated_coords = np.dot(reverse_rotation_matrix, real_world_coords_camera_frame)
-
-        # Convert back to the global frame (add the camera center, swapping axes back)
-        point_y_mm = -rotated_coords[0] + cam_center_y_mm
-        point_x_mm = -rotated_coords[1] + cam_center_x_mm
-
-        return point_x_mm, point_y_mm
-
-
-
-
     while True:
         await  detector.result_ready.wait()
         importlib.reload(calculate)
@@ -115,7 +76,9 @@ async def task():
         #            2, cv2.LINE_AA)
 
         # show suckion cup position
-        suction_xy=calculate.robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (robot_x_mm, robot_y_mm))
+        suction_xy_float=calculate.robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (robot_x_mm, robot_y_mm))
+        suction_xy=np.array(suction_xy_float, int)
+
         cv2.circle(output_frame, suction_xy,
                    15,
                    (0, 255, 255), 1, cv2.LINE_AA)
@@ -126,8 +89,8 @@ async def task():
         cv2.circle(output_frame, (320, 240), 5, (255, 255, 255), 1, cv2.LINE_AA)
 
 
-        print (f"Input: {robot_x_mm, robot_y_mm}, xy={suction_xy}")
-        reverse=screen_to_robot_mm(cam_center_mm, robot_angle_degrees, suction_xy)
+        print (f"Input: {robot_x_mm, robot_y_mm}, xy={suction_xy_float}")
+        reverse= calculate.screen_to_robot_mm(cam_center_mm, robot_angle_degrees, suction_xy_float)
         print (f"reverse: {reverse}")
 
 
