@@ -19,8 +19,8 @@ async def main():
         await asyncio.create_task(auto_reload_task(calibrate_cam))
 
     else:
-        import robot
-        await asyncio.create_task(auto_reload_task(robot))
+        import analyser
+        await asyncio.create_task(auto_reload_task(analyser))
 
 
 
