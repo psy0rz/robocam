@@ -2,14 +2,19 @@ import importlib
 
 import cv2
 import numpy as np
-
+from torchvision.utils import draw_bounding_boxes
 
 import calculate
 import detector
 from dobot.dobotfun.dobotfun import DobotFun
 from selector import Selector
-from util import draw_grid, draw_screen_center, draw_suction_cup
+
+
 import util
+importlib.reload(calculate)
+importlib.reload(util)
+
+from util import draw_grid, draw_screen_center, draw_suction_cup, draw_corner_lines, find_closest_box, draw_target_cross
 import config
 
 # Callback function for mouse click event
@@ -34,21 +39,18 @@ async def task():
     #
     # robot.move_to_nowait(x=190,y=0,z=0)
     # robot.move_to_nowait(x=380,y=0,z=0)
-    robot.move_to(config.robot_middle_x, config.robot_middle_y, z=config.robot_ground_z+100, r=90)
+    robot.move_to(config.robot_middle_x, config.robot_middle_y, z=config.robot_ground_z + 100, r=90)
     # robot.move_to(x=200 , y=100 , z=-40, r=90)
 
     # robot.move_to_nowait(x=200                    ,y=-200,z=0,r=90)
 
     cv2.namedWindow("Robot", flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
+    cv2.setMouseCallback('Robot', click_event)
 
     # selector.search_color = "orange"
 
-
-
     while True:
         await  detector.result_ready.wait()
-        importlib.reload(calculate)
-        importlib.reload(util)
 
         if detector.result_frame is None:
             continue
@@ -66,31 +68,29 @@ async def task():
         robot_angle_degrees = robot_pose.joints.j1
 
         cam_center_mm = calculate.calculate_camera_position_mm(robot_position_mm, robot_angle_degrees)
-        robot_position_pixels=calculate.robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (robot_x_mm, robot_y_mm), True)
+        robot_position_pixels = calculate.robot_to_screen_pixels(cam_center_mm, robot_angle_degrees,
+                                                                 (robot_x_mm, robot_y_mm), True)
 
-
-
-
-
-
-        draw_grid(output_frame,cam_center_mm, robot_angle_degrees)
-
-        draw_screen_center(output_frame                           )
-
+        draw_grid(output_frame, cam_center_mm, robot_angle_degrees)
+        draw_screen_center(output_frame)
         draw_suction_cup(output_frame, robot_position_pixels, cam_center_mm[2])
 
 
-        # simulated robot arm (top left click line thingy)
-        # cv2.line(output_frame, (0, 0), (robot_x, robot_y), (255, 255, 255), 4)
-        # cv2.line(output_frame, (0, 0), cam_position((robot_x, robot_y)), (0, 0, 255), 1)
+        for box in detector.result.boxes.xyxy:
+            draw_corner_lines(output_frame, box, (0,255,0),2,10)
 
-        # print(cam_angle(mouse_clicked))
+
+        closest_box=find_closest_box(detector.result.boxes.xyxy, config.cam_center_x_pixels, config.cam_center_y_pixels)
+
+        if closest_box is not None:
+
+            draw_target_cross(output_frame, closest_box, (100,100,255),2,10)
+
+
+
+
         cv2.imshow('Robot', output_frame)
-        cv2.setMouseCallback('Robot', click_event)
 
-        # # camera center
-        # screen_center_x = int(detector.result.orig_shape[1] / 2)
-        # screen_center_y = int(detector.result.orig_shape[0] / 2)
         #
         # if selector.search_point is None:
         #     selector.search_point = (screen_center_x, screen_center_y)
@@ -113,6 +113,11 @@ async def task():
         #     h = abs(y2 - y1)
         #
         #
+
+
+
+
+
         #     center_x = int((x1 + x2) / 2)
         #     center_y = int((y1 + y2) / 2)
         #     middles.append([center_x, center_y])

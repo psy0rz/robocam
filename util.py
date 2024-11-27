@@ -7,7 +7,7 @@ from calculate import robot_to_screen_pixels, get_pix_per_mm_for_camera_height
 
 
 def draw_corner_lines(img, box, color, thickness, line_length):
-    x1, y1 ,x2,y2= box
+    x1, y1 ,x2,y2= tuple(int(i) for i in box)
 
     # Calculate corner points for small line segments
     # Top-left corner horizontal and vertical lines
@@ -27,13 +27,18 @@ def draw_corner_lines(img, box, color, thickness, line_length):
     cv2.line(img, (x2, y2), (x2, y2 - line_length), color, thickness)
 
 
-def draw_target_cross(img, center, color, thickness, line_length):
+def draw_target_cross(img, target_box, color, thickness, line_length):
+
+    (x1, y1, x2, y2) = target_box
+    center_x = int((x1 + x2) / 2)
+    center_y = int((y1 + y2) / 2)
+
 
     # Draw horizontal line
-    cv2.line(img, (center[0] - line_length, center[1]), (center[0] + line_length, center[1]), color, thickness)
+    cv2.line(img, (center_x - line_length, center_y), (center_x+ line_length, center_y), color, thickness)
 
     # Draw vertical line
-    cv2.line(img, (center[0], center[1] - line_length), (center[0], center[1] + line_length), color, thickness)
+    cv2.line(img, (center_x, center_y - line_length), (center_x, center_y + line_length), color, thickness)
 
 
 def draw_grid(output_frame,cam_center_mm, cam_angle_degrees):
@@ -45,15 +50,18 @@ def draw_grid(output_frame,cam_center_mm, cam_angle_degrees):
     start_y = int(round(cam_center_mm[1], -1) - 50)
     end_y = int(round(cam_center_mm[1], -1) + 50)
 
+    color=(200,200,200)
+
+
     for x in range(start_x, end_x, step):
         screen_coord_start = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (x, start_y), True)
         screen_coord_end = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (x, end_y - step), True)
-        cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255, 0), 1, cv2.LINE_AA)
+        cv2.line(output_frame, screen_coord_start, screen_coord_end, color, 1, cv2.LINE_AA)
 
     for y in range(start_y, end_y, step):
         screen_coord_start = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (start_x, y), True)
         screen_coord_end = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (end_x - step, y), True)
-        cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255, 0), 1, cv2.LINE_AA)
+        cv2.line(output_frame, screen_coord_start, screen_coord_end, color, 1, cv2.LINE_AA)
 
 
 # get x1,y1,x2,y2 of the box that is closest to x,y (center coords)
@@ -62,7 +70,7 @@ def find_closest_box(boxes, target_x, target_y):
     closest_box = None
     min_distance = float('inf')
 
-    for xyxy in boxes.xyxy:
+    for xyxy in boxes:
             (x1, y1, x2, y2) = xyxy
 
             center_x = (x1 + x2)/2
@@ -89,5 +97,5 @@ def draw_suction_cup(img, position , camera_height):
     radius=int(config.suction_cup_diameter*pix_per_mm/2)
     cv2.circle(img, position,
                radius,
-               (0, 255, 255), 2, cv2.LINE_AA)
+               (200, 200,200), 2, cv2.LINE_AA)
 
