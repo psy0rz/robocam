@@ -17,7 +17,7 @@ async def task():
 
     detector.confidence=0.9
 
-    await place_cube(robot)
+    # await place_cube(robot)
 
 
     low_z = robot_ground_z+20
@@ -87,7 +87,7 @@ async def task():
         robot.move_to(calibrate_x, calibrate_y, z, r=90)
         await asyncio.sleep(1)
         output_frame, width, height, center_x_pixels, center_y_pixels_top = await get_cube()
-        pix_per_mm = get_pix_per_mm_for_camera_height(z-calibration_box_height)
+        pix_per_mm = get_pix_per_mm_for_camera_height(z+config.cam_offset_z-calibration_box_height)
 
 
         w_mm = height / pix_per_mm
