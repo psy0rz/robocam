@@ -8,7 +8,7 @@ from ultralytics import YOLO
 result=None
 result_frame=None
 result_ready=Event()
-confidence=0.75
+confidence=0.95
 
 frame_delay=0
 

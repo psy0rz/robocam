@@ -20,7 +20,11 @@ async def main():
 
     else:
         import analyser
-        await asyncio.create_task(auto_reload_task(analyser))
+        asyncio.create_task(auto_reload_task(analyser))
+
+        import task_cleanup
+        await asyncio.create_task(auto_reload_task(task_cleanup))
+
 
 
 

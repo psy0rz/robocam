@@ -1,12 +1,12 @@
 import importlib
 
 import cv2
-import numpy as np
-from torchvision.utils import draw_bounding_boxes
 
 import calculate
 import detector
+from calculate import screen_to_robot_mm
 from dobot.dobotfun.dobotfun import DobotFun
+from robot import robot
 from selector import Selector
 
 
@@ -22,29 +22,37 @@ import config
 
 selector = Selector()
 
-mouse_clicked = [100, 100]
+mouse_clicked = None
+
+target_box=None
+target_center_x_mm=None
+target_center_y_mm=None
 
 
-def click_event(event, x, y, flags, param):
-    if event == cv2.EVENT_LBUTTONDOWN:  # Left mouse button click
-        print(f"Mouse clicked at position ({x}, {y})")
-        # selector.search_point = (x, y)
-        mouse_clicked[0] = x
-        mouse_clicked[1] = y
+
 
 
 async def task():
-    robot = DobotFun()
     # robot.home()
     #
     # robot.move_to_nowait(x=190,y=0,z=0)
     # robot.move_to_nowait(x=380,y=0,z=0)
-    robot.move_to(config.robot_middle_x, config.robot_middle_y, z=config.robot_ground_z + 100, r=90)
     # robot.move_to(x=200 , y=100 , z=-40, r=90)
 
     # robot.move_to_nowait(x=200                    ,y=-200,z=0,r=90)
 
     cv2.namedWindow("Robot", flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
+
+    def click_event(event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:  # Left mouse button click
+            print(f"Mouse clicked at position ({x}, {y})")
+            # selector.search_point = (x, y)
+            mouse_clicked = (x, y)
+
+            global target_center_x_mm
+            global target_center_y_mm
+            (target_center_x_mm, target_center_y_mm) = screen_to_robot_mm(cam_center_mm, robot_angle_degrees, (x, y))
+
     cv2.setMouseCallback('Robot', click_event)
 
     # selector.search_color = "orange"
@@ -79,14 +87,20 @@ async def task():
         for box in detector.result.boxes.xyxy:
             draw_corner_lines(output_frame, box, (0,255,0),2,10)
 
+        global target_box
+        target_box=find_closest_box(detector.result.boxes.xyxy, config.cam_center_x_pixels, config.cam_center_y_pixels)
 
-        closest_box=find_closest_box(detector.result.boxes.xyxy, config.cam_center_x_pixels, config.cam_center_y_pixels)
+        if target_box is not None:
 
-        if closest_box is not None:
+            draw_target_cross(output_frame, target_box, (100, 100, 255), 2, 10)
 
-            draw_target_cross(output_frame, closest_box, (100,100,255),2,10)
+            global target_center_x_mm
+            global target_center_y_mm
+            (x1, y1, x2, y2) = target_box
+            center_x = int((x1 + x2) / 2)
+            center_y = int((y1 + y2) / 2)
 
-
+            (target_center_x_mm, target_center_y_mm)=screen_to_robot_mm(cam_center_mm,  robot_angle_degrees, (center_x, center_y))
 
 
         cv2.imshow('Robot', output_frame)
