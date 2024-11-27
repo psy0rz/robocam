@@ -67,7 +67,7 @@ def update_camera_matrix(camera_height):
     camera_matrix[1, 1] = np.float64(pix_per_mm)
 
 
-def robot_to_screen_pixels(camera_center_mm, camera_angle_mm, point_mm):
+def robot_to_screen_pixels(camera_center_mm, camera_angle_mm, point_mm, ints=False):
     """
     Convert a real-world point to screen coordinates, accounting for the robot's camera position and orientation.
 
@@ -106,7 +106,10 @@ def robot_to_screen_pixels(camera_center_mm, camera_angle_mm, point_mm):
     x_screen = screen_coords_homogeneous[0] / screen_coords_homogeneous[2]
     y_screen = screen_coords_homogeneous[1] / screen_coords_homogeneous[2]
 
-    return x_screen, y_screen
+    if ints:
+        return int(x_screen), int(y_screen)
+    else:
+        return x_screen, y_screen
 
 
 def screen_to_robot_mm(camera_center_mm, camera_angle_mm, point_pixels):

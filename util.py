@@ -2,12 +2,12 @@ import cv2
 import math
 import numpy as np
 
-from calculate import robot_to_screen_pixels
+import config
+from calculate import robot_to_screen_pixels, get_pix_per_mm_for_camera_height
 
 
-def draw_corner_lines(img, pt1, pt2, color, thickness, line_length):
-    x1, y1 = pt1
-    x2, y2 = pt2
+def draw_corner_lines(img, box, color, thickness, line_length):
+    x1, y1 ,x2,y2= box
 
     # Calculate corner points for small line segments
     # Top-left corner horizontal and vertical lines
@@ -46,13 +46,13 @@ def draw_grid(output_frame,cam_center_mm, cam_angle_degrees):
     end_y = int(round(cam_center_mm[1], -1) + 50)
 
     for x in range(start_x, end_x, step):
-        screen_coord_start = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (x, start_y))
-        screen_coord_end = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (x, end_y - step))
+        screen_coord_start = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (x, start_y), True)
+        screen_coord_end = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (x, end_y - step), True)
         cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255, 0), 1, cv2.LINE_AA)
 
     for y in range(start_y, end_y, step):
-        screen_coord_start = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (start_x, y))
-        screen_coord_end = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (end_x - step, y))
+        screen_coord_start = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (start_x, y), True)
+        screen_coord_end = robot_to_screen_pixels(cam_center_mm, cam_angle_degrees, (end_x - step, y), True)
         cv2.line(output_frame, screen_coord_start, screen_coord_end, (0, 255, 0), 1, cv2.LINE_AA)
 
 
@@ -74,3 +74,20 @@ def find_closest_box(boxes, target_x, target_y):
                     closest_box = xyxy
 
     return closest_box
+
+
+
+def draw_screen_center(img):
+    cv2.circle(img, (config.cam_center_x_pixels, config.cam_center_y_pixels), 5, (255, 255, 255), 1,
+               cv2.LINE_AA)
+
+
+def draw_suction_cup(img, position , camera_height):
+
+    pix_per_mm=get_pix_per_mm_for_camera_height(camera_height)
+
+    radius=int(config.suction_cup_diameter*pix_per_mm/2)
+    cv2.circle(img, position,
+               radius,
+               (0, 255, 255), 2, cv2.LINE_AA)
+

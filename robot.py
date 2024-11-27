@@ -8,7 +8,8 @@ import calculate
 import detector
 from dobot.dobotfun.dobotfun import DobotFun
 from selector import Selector
-from util import draw_grid
+from util import draw_grid, draw_screen_center, draw_suction_cup
+import util
 import config
 
 # Callback function for mouse click event
@@ -33,8 +34,7 @@ async def task():
     #
     # robot.move_to_nowait(x=190,y=0,z=0)
     # robot.move_to_nowait(x=380,y=0,z=0)
-    robot_middle = ((190 + 380) / 2, 0)
-    robot.move_to(x=robot_middle[0], y=robot_middle[1], z=config.robot_ground_z+40, r=90)
+    robot.move_to(config.robot_middle_x, config.robot_middle_y, z=config.robot_ground_z+100, r=90)
     # robot.move_to(x=200 , y=100 , z=-40, r=90)
 
     # robot.move_to_nowait(x=200                    ,y=-200,z=0,r=90)
@@ -43,9 +43,12 @@ async def task():
 
     # selector.search_color = "orange"
 
+
+
     while True:
         await  detector.result_ready.wait()
         importlib.reload(calculate)
+        importlib.reload(util)
 
         if detector.result_frame is None:
             continue
@@ -54,47 +57,28 @@ async def task():
 
         ###############3# robot arm
 
-        # calculate coordinates of the cam, from robot arm coords
-
         robot_pose = robot.get_pose()
         robot_x_mm = (robot_pose.position.x)
         robot_y_mm = (robot_pose.position.y)
         robot_z_mm = (robot_pose.position.z)
-
         robot_position_mm = (robot_x_mm, robot_y_mm, robot_z_mm)
 
         robot_angle_degrees = robot_pose.joints.j1
-        # robot_angle_degrees=cam_angle((robot_x_mm, robot_y_mm))
-
 
         cam_center_mm = calculate.calculate_camera_position_mm(robot_position_mm, robot_angle_degrees)
-        # print(f"robot={(robot_x_mm, robot_y_mm)} cam={cam_center_mm}")
-
-        # fixed test point
-        #
-        # cv2.circle(output_frame, calulate.robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (330, 0)), 2, (255, 255, 0),
-        #            2, cv2.LINE_AA)
-
-        # show suckion cup position
-        suction_xy_float=calculate.robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (robot_x_mm, robot_y_mm))
-        suction_xy=np.array(suction_xy_float, int)
-
-        cv2.circle(output_frame, suction_xy,
-                   15,
-                   (0, 255, 255), 1, cv2.LINE_AA)
-
-        # cv2.circle(output_frame, (320, 240), 20,
-        #            (0, 255, 255), 2, cv2.LINE_AA)
-
-        cv2.circle(output_frame, (320, 240), 5, (255, 255, 255), 1, cv2.LINE_AA)
+        robot_position_pixels=calculate.robot_to_screen_pixels(cam_center_mm, robot_angle_degrees, (robot_x_mm, robot_y_mm), True)
 
 
-        print (f"Input: {robot_x_mm, robot_y_mm}, xy={suction_xy_float}")
-        reverse= calculate.screen_to_robot_mm(cam_center_mm, robot_angle_degrees, suction_xy_float)
-        print (f"reverse: {reverse}")
+
+
 
 
         draw_grid(output_frame,cam_center_mm, robot_angle_degrees)
+
+        draw_screen_center(output_frame                           )
+
+        draw_suction_cup(output_frame, robot_position_pixels, cam_center_mm[2])
+
 
         # simulated robot arm (top left click line thingy)
         # cv2.line(output_frame, (0, 0), (robot_x, robot_y), (255, 255, 255), 4)

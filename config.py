@@ -2,6 +2,7 @@
 robot_middle_x = 300
 robot_middle_y = 0
 robot_ground_z = -50
+suction_cup_diameter=20
 
 # pixel center of cam
 cam_center_x_pixels = 320
