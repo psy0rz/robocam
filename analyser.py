@@ -41,6 +41,8 @@ async def task():
 
     # robot.move_to_nowait(x=200                    ,y=-200,z=0,r=90)
 
+    print(f"Using robot: {config.robot_name}")
+
     cv2.namedWindow("Robot", flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
 
     def click_event(event, x, y, flags, param):
