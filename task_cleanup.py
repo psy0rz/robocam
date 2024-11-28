@@ -28,7 +28,7 @@ async def task():
                                           config.robot_ground_z + config.calibration_box_height-3, r=90)
                 await robot.move_to_async(analyser.target_center_x_mm, analyser.target_center_y_mm,
                                           config.robot_ground_z + config.calibration_box_height + 100, r=90)
-                await robot.move_to_async(0, 240, 100, r=90)
+                await robot.move_to_async(-10, 240, 100, r=90)
                 await robot.los_async()
                 # await asyncio.sleep(1)
                 await goto_overview()
@@ -36,6 +36,7 @@ async def task():
                 # await  asyncio.sleep(1)
         except Exception as e:
             await robot.los_async()
+            await goto_overview()
             await asyncio.sleep(5)
 
             print(f"Ignored {e}")
