@@ -14,7 +14,8 @@ import util
 importlib.reload(calculate)
 importlib.reload(util)
 
-from util import draw_grid, draw_screen_center, draw_suction_cup, draw_corner_lines, find_closest_box, draw_target_cross
+from util import draw_grid, draw_screen_center, draw_suction_cup, draw_corner_lines, find_closest_box, \
+    draw_target_cross, draw_radius_limits
 import config
 
 # Callback function for mouse click event
@@ -84,6 +85,7 @@ async def task():
                                                                  (robot_x_mm, robot_y_mm), True)
 
         draw_grid(output_frame, cam_center_mm, robot_angle_degrees)
+        draw_radius_limits(output_frame, cam_center_mm, robot_angle_degrees)
         draw_screen_center(output_frame)
         draw_suction_cup(output_frame, robot_position_pixels, cam_center_mm[2])
 

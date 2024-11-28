@@ -5,6 +5,8 @@ robot_middle_x = 300
 robot_middle_y = 0
 robot_ground_z = -50
 suction_cup_diameter=20
+robot_min_radius=225
+robot_max_radius=360
 
 # pixel center of cam
 cam_center_x_pixels = 320
@@ -12,6 +14,8 @@ cam_center_y_pixels = 240
 cam_lag_s = 0.25
 
 calibration_box_height=25
+
+
 
 
 if robot.id=='36ffd9054155383410591257':

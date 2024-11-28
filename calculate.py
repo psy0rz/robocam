@@ -67,18 +67,18 @@ def update_camera_matrix(camera_height):
     camera_matrix[1, 1] = np.float64(pix_per_mm)
 
 
-def robot_to_screen_pixels(camera_center_mm, camera_angle_mm, point_mm, ints=False):
+def robot_to_screen_pixels(camera_center_mm, camera_angle, point_mm, ints=False):
     """
     Convert a real-world point to screen coordinates, accounting for the robot's camera position and orientation.
 
     :param camera_center_mm: Tuple (robot_x, robot_y, robot_z) representing the camera's center in world units.
-    :param camera_angle_mm: Camera rotation angle (in degrees, counterclockwise).
+    :param camera_angle: Camera rotation angle (in degrees, counterclockwise).
     :param point_mm: Tuple (point_x, point_y) representing the real-world point to project.
     :param camera_matrix: Intrinsic camera matrix (3x3 numpy array).
     :return: Screen coordinates as a tuple (x_screen, y_screen).
     """
     # Convert angle to radians
-    cam_angle_rad = np.radians(camera_angle_mm)
+    cam_angle_rad = np.radians(camera_angle)
 
     # Rotation matrix for the camera
     rotation_matrix = np.array([
