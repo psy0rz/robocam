@@ -24,7 +24,7 @@ async def get_cube():
 
         cv2.circle(output_frame, (cam_center_x_pixels, cam_center_y_pixels), 7, (255, 255, 255), 1, cv2.LINE_AA)
 
-        closest = find_closest_box(detector.result.boxes, cam_center_x_pixels, cam_center_y_pixels)
+        closest = find_closest_box(detector.result.boxes.xyxy, cam_center_x_pixels, cam_center_y_pixels)
         if closest is not None:
             (x1, y1, x2, y2) = closest
 

@@ -11,4 +11,4 @@ docker run -e DISPLAY=$DISPLAY \
   --net=host -it --ipc=host \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
   -v ~/.Xauthority:/root/.Xauthority \
-  -it robocam python main.py
+  -it robocam python main.py $1

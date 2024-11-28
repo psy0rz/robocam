@@ -71,11 +71,13 @@ async def task():
         robot_x_mm = (robot_pose.position.x)
         robot_y_mm = (robot_pose.position.y)
         robot_z_mm = (robot_pose.position.z)
-        robot_position_mm = (robot_x_mm, robot_y_mm, robot_z_mm)
+        robot_position_mm = (robot_x_mm, robot_y_mm, robot_z_mm-config.calibration_box_height)
 
         robot_angle_degrees = robot_pose.joints.j1
 
         cam_center_mm = calculate.calculate_camera_position_mm(robot_position_mm, robot_angle_degrees)
+        # cam_center_mm[2]=cam_center_mm[2]-config.calibration_box_height
+
         robot_position_pixels = calculate.robot_to_screen_pixels(cam_center_mm, robot_angle_degrees,
                                                                  (robot_x_mm, robot_y_mm), True)
 
