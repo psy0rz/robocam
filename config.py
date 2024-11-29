@@ -6,7 +6,7 @@ robot_middle_y = 0
 robot_ground_z = -50
 suction_cup_diameter=20
 robot_min_radius=225
-robot_max_radius=360
+robot_max_radius=363
 
 # pixel center of cam
 cam_center_x_pixels = 320

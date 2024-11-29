@@ -23,7 +23,7 @@ import config
 
 selector = Selector()
 
-mouse_clicked = None
+mouse_clicked = [config.cam_center_x_pixels, config.cam_center_y_pixels]
 
 target_box=None
 target_center_x_mm=None
@@ -50,11 +50,14 @@ async def task():
         if event == cv2.EVENT_LBUTTONDOWN:  # Left mouse button click
             print(f"Mouse clicked at position ({x}, {y})")
             # selector.search_point = (x, y)
-            mouse_clicked = (x, y)
+            mouse_clicked[0]=x
+            mouse_clicked[1]=y
 
-            global target_center_x_mm
-            global target_center_y_mm
-            (target_center_x_mm, target_center_y_mm) = screen_to_robot_mm(cam_center_mm, robot_angle_degrees, (x, y))
+            # global target_center_x_mm
+            # global target_center_y_mm
+            # global target_box
+            # target_box=1
+            # (target_center_x_mm, target_center_y_mm) = screen_to_robot_mm(cam_center_mm, robot_angle_degrees, (x, y))
 
     cv2.setMouseCallback('Robot', click_event)
 
@@ -74,7 +77,7 @@ async def task():
         robot_x_mm = (robot_pose.position.x)
         robot_y_mm = (robot_pose.position.y)
         robot_z_mm = (robot_pose.position.z)
-        robot_position_mm = (robot_x_mm, robot_y_mm, robot_z_mm-config.calibration_box_height)
+        robot_position_mm = (robot_x_mm, robot_y_mm, robot_z_mm)
 
         robot_angle_degrees = robot_pose.joints.j1
 
@@ -94,7 +97,7 @@ async def task():
             draw_corner_lines(output_frame, box, (0,255,0),2,10)
 
         global target_box
-        target_box=find_closest_box(detector.result.boxes.xyxy, config.cam_center_x_pixels, config.cam_center_y_pixels)
+        target_box=find_closest_box(detector.result.boxes.xyxy, mouse_clicked[0], mouse_clicked[1])
 
         if target_box is not None:
 
