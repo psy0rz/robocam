@@ -8,7 +8,8 @@ from ultralytics import YOLO
 result=None
 result_frame=None
 result_ready=Event()
-confidence=0.85
+confidence=0.90
+
 
 frame_delay=0
 
@@ -29,7 +30,7 @@ async def task():
     # trained on yolo11n.pt small, zonder rotate
     model = YOLO("./runs/detect/train/weights/best.pt")
 
-    # model = YOLO("./runs/obb/train34/weights/best.pt")
+    # model = YOLO("./runs/obb/train34/weights/best.pt"
 
 
 

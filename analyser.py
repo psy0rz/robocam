@@ -1,4 +1,6 @@
+import asyncio
 import importlib
+from asyncio import Event
 
 import cv2
 
@@ -24,6 +26,7 @@ selector = Selector()
 
 mouse_clicked = [config.cam_center_x_pixels, config.cam_center_y_pixels]
 
+target_ready=Event()
 target_box=None
 target_center_x_mm=None
 target_center_y_mm=None
@@ -31,8 +34,16 @@ target_center_y_mm=None
 
 
 
+async def wait_for_target(x,y, timeout):
+    mouse_clicked[0]=x
+    mouse_clicked[1]=y
 
+    try:
+        await asyncio.wait_for(target_ready.wait(),timeout)
+    except asyncio.TimeoutError:
+        return False
 
+    return True
 
 
 async def task():
@@ -85,6 +96,8 @@ async def task():
 
         cam_center_mm = calculate.calculate_camera_position_mm(robot_position_mm, robot_angle_degrees)
 
+        # cam_center_mm=(cam_center_mm[0], cam_center_mm[1],cam_center_mm[2]+config.calibration_box_height)
+
         robot_position_pixels = calculate.robot_to_screen_pixels(cam_center_mm, robot_angle_degrees,
                                                                  (robot_x_mm, robot_y_mm), True)
 
@@ -117,6 +130,8 @@ async def task():
 
             (target_center_x_mm, target_center_y_mm)=screen_to_robot_mm(cam_center_mm,  robot_angle_degrees, (center_x, center_y))
 
+            target_ready.set()
+            target_ready.clear()
 
         cv2.imshow('Robot', output_frame)
 
