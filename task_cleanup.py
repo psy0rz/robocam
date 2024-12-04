@@ -14,7 +14,7 @@ async def goto_overview():
 
 async def task():
     await goto_overview()
-    return
+    # return
     while True:
 
         try:
@@ -27,11 +27,13 @@ async def task():
                 x = analyser.target_center_x_mm
                 y = analyser.target_center_y_mm
 
+
                 #look at bottom middle
                 analyser.target_box = None
                 analyser.mouse_clicked[0]=320
                 analyser.mouse_clicked[1]=400
                 await robot.move_to_async(x, y, config.robot_ground_z +  130, r=rotate)
+                await asyncio.sleep(1)
 
                 #wait for box
                 while analyser.target_box is None:

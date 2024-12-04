@@ -4,14 +4,15 @@ import config
 
 import numpy as np
 
+
 def distance_between_points(point1, point2):
     # dist=cv2.norm(np.array(point1) - np.array(point2))
     dist = math.sqrt((point2[0] - point1[0]) ** 2 + (point2[1] - point1[1]) ** 2)
 
     return dist
 
-def get_pix_per_mm_for_camera_height(camera_height):
 
+def get_pix_per_mm_for_camera_height(camera_height):
     return (config.low_cam_height / camera_height) * config.low_x_pix_per_mm
 
 
@@ -54,6 +55,7 @@ def calculate_camera_position_mm(robot_position_mm, robot_angle_degrees):
 
     return x_camera, y_camera, z_camera
 
+
 camera_matrix = np.array([
     [None, 0, config.cam_center_x_pixels],  # fill be filled in later
     [0, None, config.cam_center_y_pixels],
@@ -87,12 +89,12 @@ def robot_to_screen_pixels(camera_center_mm, camera_angle, point_mm, ints=False)
     ])
 
     # Extract the coordinates
-    cam_center_x, cam_center_y , cam_center_z= camera_center_mm
+    cam_center_x, cam_center_y, cam_center_z = camera_center_mm
     point_x, point_y = point_mm
 
     # Adjust point to the camera's frame of reference (relative to camera center)
     # x and y axis swapped!
-    relative_coords = np.array([ cam_center_y-point_y,  cam_center_x-point_x])
+    relative_coords = np.array([cam_center_y - point_y, cam_center_x - point_x])
 
     # Rotate the adjusted coordinates into the camera's orientation
     rotated_coords = np.dot(rotation_matrix, relative_coords)
@@ -113,7 +115,6 @@ def robot_to_screen_pixels(camera_center_mm, camera_angle, point_mm, ints=False)
 
 
 def screen_to_robot_mm(camera_center_mm, camera_angle_mm, point_pixels):
-
     # Convert angle to radians
     cam_angle_rad = np.radians(camera_angle_mm)
 
@@ -148,3 +149,25 @@ def screen_to_robot_mm(camera_center_mm, camera_angle_mm, point_pixels):
 
     return point_x_mm, point_y_mm
 
+
+# is point in range of the robot?
+def point_in_range(x_mm, y_mm):
+    radius = math.sqrt(x_mm ** 2 + y_mm ** 2)
+
+    if config.robot_min_radius < radius < config.robot_max_radius and x_mm > 0:
+        return True
+
+    return False
+
+
+# Assumes the robot is hovering above the a square cube.
+# Camera is offset to the top, so the height of the box is incorrect, use the width to calculate actual height-middle
+def cube_get_center_pixel(box):
+
+    (x1, y1, x2, y2) = box
+    center_x = int((x1 + x2) / 2)
+
+    w = x2 - x1
+    center_y = int(y2 - (w / 2))
+
+    return center_x, center_y

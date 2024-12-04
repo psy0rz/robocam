@@ -84,7 +84,6 @@ async def task():
         robot_angle_degrees = robot_pose.joints.j1
 
         cam_center_mm = calculate.calculate_camera_position_mm(robot_position_mm, robot_angle_degrees)
-        # cam_center_mm[2]=cam_center_mm[2]-config.calibration_box_height
 
         robot_position_pixels = calculate.robot_to_screen_pixels(cam_center_mm, robot_angle_degrees,
                                                                  (robot_x_mm, robot_y_mm), True)
@@ -94,87 +93,37 @@ async def task():
         util.draw_screen_center(output_frame)
         util.draw_suction_cup(output_frame, robot_position_pixels, cam_center_mm[2])
 
-
+        valid_boxes=[]
         for box in detector.result.boxes.xyxy:
-            util.draw_corner_lines(output_frame, box, (0,255,0),2,10)
+
+            center_x, center_y=calculate.cube_get_center_pixel(box)
+            center_x_mm,center_y_mm=calculate.screen_to_robot_mm(cam_center_mm, robot_angle_degrees, (center_x, center_y))
+            if calculate.point_in_range(center_x_mm, center_y_mm):
+
+                util.draw_corner_lines(output_frame, box, (0,255,0),2,10)
+                valid_boxes.append(box)
+            else:
+                util.draw_corner_lines(output_frame, box, (0,0,255),2,10)
 
         global target_box
-        target_box=util.find_closest_box(detector.result.boxes.xyxy, mouse_clicked[0], mouse_clicked[1])
+        target_box=util.find_closest_box(valid_boxes, mouse_clicked[0], mouse_clicked[1])
 
         if target_box is not None:
-
-
             global target_center_x_mm
             global target_center_y_mm
-            (x1, y1, x2, y2) = target_box
-            center_x = int((x1 + x2) / 2)
-            # center_y = int((y1 + y2) / 2)
+            center_x, center_y=calculate.cube_get_center_pixel(target_box)
 
-            #camera is offset to the top, so the height of the box is off, use the width to calculate actual middle
-            w=x2-x1
-            center_y = int(y2-(w/2))
-
-            util.draw_target_cross(output_frame, center_x, center_y, (100, 100, 255), 2, 10)
+            util.draw_target_cross(output_frame, center_x, center_y, (255, 255, 255), 2, 10)
 
             (target_center_x_mm, target_center_y_mm)=screen_to_robot_mm(cam_center_mm,  robot_angle_degrees, (center_x, center_y))
 
 
         cv2.imshow('Robot', output_frame)
 
-        #
-        # if selector.search_point is None:
-        #     selector.search_point = (screen_center_x, screen_center_y)
-        #
-        # # print(detector.result.boxes.id)
-        #
-        # selector.reset()
-        # middles = []
-        # id_nr = 0
-        # # print (detector.result.obb)
-        # # for xyxy in detector.result.boxes.xyxy:
-        # for xyxy in detector.result.boxes.xyxy:
-        #     (x1, y1, x2, y2) = xyxy
-        #     x1 = int(x1)
-        #     y1 = int(y1)
-        #     x2 = int(x2)
-        #     y2 = int(y2)
-        #
-        #     w = abs(x2 - x1)
-        #     h = abs(y2 - y1)
-        #
-        #
 
 
 
 
-
-        #     center_x = int((x1 + x2) / 2)
-        #     center_y = int((y1 + y2) / 2)
-        #     middles.append([center_x, center_y])
-        #
-        #     # determine color sampling region
-        #     sample_x1 = int(center_x - w / 4)
-        #     sample_x2 = int(center_x + w / 4)
-        #     sample_y1 = int(center_y - h / 4)
-        #     sample_y2 = int(center_y + h / 4)
-        #
-        #     # average color of this region
-        #     sample_image = detector.result_frame[sample_y1:sample_y2, sample_x1:sample_x2]
-        #     average_color = np.mean(sample_image, axis=(0, 1))
-        #
-        #     # remapt to rgb
-        #     average_color = (average_color[2], average_color[1], average_color[0])
-        #     (color_name, neasest_color) = colormapper.find_closest_color(average_color)
-        #
-        #     #probaly paper grid
-        #     if color_name=="gray":
-        #         continue
-        #
-        #     # normal yolo outline
-        #     draw_corner_lines(output_frame, (x1, y1), (x2, y2), (0, 0, 0), 1, 5)
-        #     draw_corner_lines(output_frame, (sample_x1, sample_y1), (sample_x2, sample_y2), [255, 255, 255], 1, 5)
-        #
-        #
         #
         #
         #
@@ -184,22 +133,3 @@ async def task():
         #                 (x1, y1 - 2), cv2.FONT_HERSHEY_SIMPLEX,
         #                 0.3, color=[255, 255, 255], thickness=1, lineType=cv2.LINE_AA)
         #
-        #     if detector.result.boxes.id is not None:
-        #         id = detector.result.boxes.id[id_nr]
-        #         selector.update((center_x, center_y), color_name)
-        #
-        #     id_nr = id_nr + 1
-        #
-        # cv2.circle(output_frame, selector.search_point, 5, (255, 255, 255), 1, cv2.LINE_AA)
-        #
-        # if (selector.current_point is not None):
-        #     draw_target_cross(output_frame, selector.current_point, (50, 50, 255), 1, 1000)
-
-        # cv2.putText(output_frame, f"robot={robot_x, robot_y}",
-        #             (screen_center_x,screen_center_y+100), cv2.FONT_HERSHEY_SIMPLEX,
-        #             0.3, color=[255, 255, 255], thickness=1, lineType=cv2.LINE_AA)
-        #
-        #
-        # cv2.putText(output_frame, f"cam={center} (robot degrees={robot_angle:.1f})",
-        #             (screen_center_x+10, screen_center_y), cv2.FONT_HERSHEY_SIMPLEX,
-        #             0.3, color=[255, 255, 255], thickness=1, lineType=cv2.LINE_AA)
