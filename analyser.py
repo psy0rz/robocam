@@ -3,6 +3,7 @@ import importlib
 from asyncio import Event
 
 import cv2
+from docutils.nodes import target
 
 import calculate
 import detector
@@ -37,15 +38,16 @@ async def wait_for_target(x, y, timeout):
     mouse_clicked[0] = x
     mouse_clicked[1] = y
 
-    #frame lag
-    await asyncio.sleep(0.5)
+    # frame lag
+    # await asyncio.sleep(0.5)
+
 
     try:
         await asyncio.wait_for(target_ready.wait(), timeout)
     except asyncio.TimeoutError:
         return False
 
-    return True
+    return (target_center_x_mm, target_center_y_mm)
 
 
 async def task():
