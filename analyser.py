@@ -14,8 +14,7 @@ import util
 importlib.reload(calculate)
 importlib.reload(util)
 
-from util import draw_grid, draw_screen_center, draw_suction_cup, draw_corner_lines, find_closest_box, \
-    draw_target_cross, draw_radius_limits
+
 import config
 
 # Callback function for mouse click event
@@ -28,6 +27,9 @@ mouse_clicked = [config.cam_center_x_pixels, config.cam_center_y_pixels]
 target_box=None
 target_center_x_mm=None
 target_center_y_mm=None
+
+
+
 
 
 
@@ -87,27 +89,32 @@ async def task():
         robot_position_pixels = calculate.robot_to_screen_pixels(cam_center_mm, robot_angle_degrees,
                                                                  (robot_x_mm, robot_y_mm), True)
 
-        draw_grid(output_frame, cam_center_mm, robot_angle_degrees)
-        draw_radius_limits(output_frame, cam_center_mm, robot_angle_degrees)
-        draw_screen_center(output_frame)
-        draw_suction_cup(output_frame, robot_position_pixels, cam_center_mm[2])
+        util.draw_grid(output_frame, cam_center_mm, robot_angle_degrees)
+        util.draw_radius_limits(output_frame, cam_center_mm, robot_angle_degrees)
+        util.draw_screen_center(output_frame)
+        util.draw_suction_cup(output_frame, robot_position_pixels, cam_center_mm[2])
 
 
         for box in detector.result.boxes.xyxy:
-            draw_corner_lines(output_frame, box, (0,255,0),2,10)
+            util.draw_corner_lines(output_frame, box, (0,255,0),2,10)
 
         global target_box
-        target_box=find_closest_box(detector.result.boxes.xyxy, mouse_clicked[0], mouse_clicked[1])
+        target_box=util.find_closest_box(detector.result.boxes.xyxy, mouse_clicked[0], mouse_clicked[1])
 
         if target_box is not None:
 
-            draw_target_cross(output_frame, target_box, (100, 100, 255), 2, 10)
 
             global target_center_x_mm
             global target_center_y_mm
             (x1, y1, x2, y2) = target_box
             center_x = int((x1 + x2) / 2)
-            center_y = int((y1 + y2) / 2)
+            # center_y = int((y1 + y2) / 2)
+
+            #camera is offset to the top, so the height of the box is off, use the width to calculate actual middle
+            w=x2-x1
+            center_y = int(y2-(w/2))
+
+            util.draw_target_cross(output_frame, center_x, center_y, (100, 100, 255), 2, 10)
 
             (target_center_x_mm, target_center_y_mm)=screen_to_robot_mm(cam_center_mm,  robot_angle_degrees, (center_x, center_y))
 

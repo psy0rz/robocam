@@ -27,10 +27,7 @@ def draw_corner_lines(img, box, color, thickness, line_length):
     cv2.line(img, (x2, y2), (x2, y2 - line_length), color, thickness)
 
 
-def draw_target_cross(img, target_box, color, thickness, line_length):
-    (x1, y1, x2, y2) = target_box
-    center_x = int((x1 + x2) / 2)
-    center_y = int((y1 + y2) / 2)
+def draw_target_cross(img, center_x,center_y, color, thickness, line_length):
 
     # Draw horizontal line
     cv2.line(img, (center_x - line_length, center_y), (center_x + line_length, center_y), color, thickness)
@@ -101,6 +98,11 @@ def draw_radius_limits(img, camera_center_mm, camera_angle):
     cv2.circle(img, robot_center,
                int(config.robot_min_radius * pix_per_mm),
                (0, 0, 255), 1, cv2.LINE_AA)
+
+    # cv2.circle(img, robot_center,
+    #            int((config.robot_min_radius+52) * pix_per_mm),
+    #            (0, 0, 255), 1, cv2.LINE_AA)
+
 
     cv2.circle(img, robot_center,
                int(config.robot_max_radius * pix_per_mm),
